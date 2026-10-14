@@ -143,6 +143,7 @@ interface DbActions {
   updatePrefs: (patch: Partial<UserPrefs>) => Promise<Result>
   deleteProfile: () => Promise<Result>
   claimFirstOwner: () => Promise<Result<boolean>>
+  hasOwner: () => Promise<Result<boolean>>
   createTelegramLink: () => Promise<Result<string>>
   unlinkTelegram: () => Promise<Result>
   reloadMe: () => Promise<void>
@@ -396,6 +397,11 @@ export const useDb = create<DbState & DbActions>()((set, get) => {
       const { data, error } = await supabase.from('profiles').select('*').eq('id', me.id).single<ProfileRow>()
       if (error) console.warn('[data] профиль не обновлён', error.message)
       else set({ me: toUser(data) })
+    },
+
+    hasOwner: async () => {
+      const { data, error } = await supabase.rpc('has_owner')
+      return error ? fail(errorText(error)) : ok(Boolean(data))
     },
 
     claimFirstOwner: async () => {

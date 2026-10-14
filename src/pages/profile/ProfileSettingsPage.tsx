@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useClerk } from '@clerk/clerk-react'
 import { useDb } from '@/data/store'
@@ -19,6 +19,19 @@ export default function ProfileSettingsPage() {
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [claiming, setClaiming] = useState(false)
+  // Кнопка «Стать владельцем» нужна только при первом запуске, пока владельца нет
+  const hasOwner = useDb((s) => s.hasOwner)
+  const [ownerExists, setOwnerExists] = useState<boolean | null>(null)
+  useEffect(() => {
+    if (user.role !== 'client') return
+    let alive = true
+    void hasOwner().then((res) => {
+      if (alive) setOwnerExists(res.ok ? res.value : true)
+    })
+    return () => {
+      alive = false
+    }
+  }, [hasOwner, user.role])
   const p = user.prefs
 
   const save = async (patch: Partial<UserPrefs>) => {
@@ -45,7 +58,7 @@ export default function ProfileSettingsPage() {
         </p>
       </section>
 
-      {user.role === 'client' && (
+      {user.role === 'client' && ownerExists === false && (
         <section className="panel stack" aria-labelledby="first-owner">
           <h2 id="first-owner" style={{ fontSize: 'var(--fs-lg)' }}>Первый запуск</h2>
           <p className="muted" style={{ fontSize: 'var(--fs-sm)' }}>

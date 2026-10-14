@@ -37,7 +37,7 @@ function renderEmail(t: Task) {
   const when = new Intl.DateTimeFormat('ru-RU', { timeZone: tz, weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }).format(new Date(t.starts_at))
   const shop = t.shop_name || 'Барбершоп'
   const lead = t.kind === 'reminder_24h' ? 'Напоминаем: завтра у вас запись' : 'Через 2 часа у вас запись'
-  const price = new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 2 }).format(Number(t.total))
+  const price = new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(Number(t.total))
   const rows: [string, string][] = [
     ['Когда', when],
     ['Мастер', t.master_name],

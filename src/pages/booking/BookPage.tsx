@@ -439,9 +439,11 @@ function ConfirmStep({
             <Checkbox
               label="Напомнить о записи за 24 и за 2 часа"
               hint={
-                user.prefs.channel === 'email'
-                  ? `Канал: email${user.email ? ` (${user.email})` : ' — не указан, добавьте в профиле'}. Отправка заработает после подключения сервиса уведомлений.`
-                  : 'Канал: Telegram. Отправка заработает после подключения бота.'
+                user.telegramLinked
+                  ? 'Придут в Telegram.'
+                  : settings.emailRemindersEnabled && user.prefs.channel === 'email' && user.email
+                    ? `Придут на ${user.email}.`
+                    : 'Чтобы получать напоминания, подключите Telegram в профиле → Настройки.'
               }
               checked={user.prefs.reminders}
               onChange={(e) => void updatePrefs({ reminders: e.target.checked })}

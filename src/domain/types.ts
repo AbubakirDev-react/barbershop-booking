@@ -126,6 +126,10 @@ export interface ShopSettings {
   cancelBeforeHours: number
   rescheduleBeforeHours: number
   links: { twoGis: string; yandexMaps: string; telegram: string; instagram: string }
+  /** Username Telegram-бота напоминаний; пусто — бот не подключён */
+  telegramBotUsername: string
+  /** Email-напоминания работают только со своим доменом в Resend */
+  emailRemindersEnabled: boolean
 }
 
 export type ReviewStatus = 'pending' | 'published' | 'hidden'
@@ -178,5 +182,7 @@ export interface User {
   role: Role
   active: boolean
   prefs: UserPrefs
+  /** Подключён ли Telegram-чат для напоминаний */
+  telegramLinked: boolean
   createdAt: string
 }

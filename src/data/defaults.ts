@@ -19,6 +19,8 @@ export const DEFAULT_SETTINGS: ShopSettings = {
   cancelBeforeHours: 2,
   rescheduleBeforeHours: 2,
   links: { twoGis: '', yandexMaps: '', telegram: '', instagram: '' },
+  telegramBotUsername: '',
+  emailRemindersEnabled: false,
 }
 
 /** Категории из плана; владелец может переименовать, переставить и удалить */

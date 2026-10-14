@@ -143,6 +143,9 @@ interface DbActions {
   updatePrefs: (patch: Partial<UserPrefs>) => Promise<Result>
   deleteProfile: () => Promise<Result>
   claimFirstOwner: () => Promise<Result<boolean>>
+  createTelegramLink: () => Promise<Result<string>>
+  unlinkTelegram: () => Promise<Result>
+  reloadMe: () => Promise<void>
 
   createAppointment: (input: CreateAppointmentInput) => Promise<Result<Appointment>>
   changeStatus: (id: string, to: AppointmentStatus, reason?: string) => Promise<Result>
@@ -371,6 +374,28 @@ export const useDb = create<DbState & DbActions>()((set, get) => {
       const res = await mutate(() => supabase.from('profiles').delete().eq('id', me.id), [])
       if (res.ok) set({ me: null, appointments: [], notifications: [] })
       return res.ok ? ok(undefined) : res
+    },
+
+    // Ссылка t.me/<бот>?start=<код>; код одноразовый и действует 15 минут
+    createTelegramLink: async () => {
+      const bot = get().settings.telegramBotUsername
+      if (!bot) return fail('Telegram-бот барбершопа ещё не подключён')
+      const res = await mutate(async () => supabase.rpc('create_telegram_link'), [])
+      return res.ok ? ok(`https://t.me/${bot}?start=${res.value as string}`) : res
+    },
+
+    unlinkTelegram: async () => {
+      const res = await mutate(async () => supabase.rpc('unlink_telegram'), [])
+      if (res.ok) await get().reloadMe()
+      return res.ok ? ok(undefined) : res
+    },
+
+    reloadMe: async () => {
+      const me = get().me
+      if (!me) return
+      const { data, error } = await supabase.from('profiles').select('*').eq('id', me.id).single<ProfileRow>()
+      if (error) console.warn('[data] профиль не обновлён', error.message)
+      else set({ me: toUser(data) })
     },
 
     claimFirstOwner: async () => {

@@ -32,6 +32,8 @@ export interface SettingsRow {
   link_yandex_maps: string
   link_telegram: string
   link_instagram: string
+  telegram_bot_username: string
+  email_reminders_enabled: boolean
 }
 export interface CategoryRow { id: string; name: string; sort: number }
 export interface ServiceRow {
@@ -117,6 +119,7 @@ export interface ProfileRow {
   reminders: boolean
   channel: 'email' | 'telegram'
   marketing: boolean
+  telegram_chat_id: number | null
   created_at: string
 }
 
@@ -140,6 +143,8 @@ export const toSettings = (r: SettingsRow): ShopSettings => ({
   cancelBeforeHours: r.cancel_before_hours,
   rescheduleBeforeHours: r.reschedule_before_hours,
   links: { twoGis: r.link_2gis, yandexMaps: r.link_yandex_maps, telegram: r.link_telegram, instagram: r.link_instagram },
+  telegramBotUsername: r.telegram_bot_username,
+  emailRemindersEnabled: r.email_reminders_enabled,
 })
 
 export const fromSettings = (s: Partial<ShopSettings>): Partial<SettingsRow> => {
@@ -162,6 +167,8 @@ export const fromSettings = (s: Partial<ShopSettings>): Partial<SettingsRow> => 
     row.link_telegram = s.links.telegram.trim()
     row.link_instagram = s.links.instagram.trim()
   }
+  // Username бота пишет только сервер при настройке вебхука
+  if (s.emailRemindersEnabled !== undefined) row.email_reminders_enabled = s.emailRemindersEnabled
   return row
 }
 
@@ -279,5 +286,6 @@ export const toUser = (r: ProfileRow): User => ({
   role: r.role,
   active: r.active,
   prefs: { reminders: r.reminders, channel: r.channel, marketing: r.marketing },
+  telegramLinked: r.telegram_chat_id !== null,
   createdAt: r.created_at,
 })

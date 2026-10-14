@@ -1,7 +1,8 @@
-// Отправка напоминаний о записи через Resend.
+// Отправка напоминаний о записи: Telegram (бесплатно) и email через Resend.
 // Вызывается pg_cron раз в 5 минут с заголовком x-cron-secret (секрет в Vault).
 // Секреты функции (Supabase → Edge Functions → Secrets):
-//   RESEND_API_KEY — ключ Resend (обязательно)
+//   TELEGRAM_BOT_TOKEN — токен бота (для канала Telegram)
+//   RESEND_API_KEY — ключ Resend (для канала email; включается владельцем в настройках)
 //   RESEND_FROM    — отправитель, например "Барбершоп <noreply@ваш-домен.ru>".
 //                    Без своего домена Resend доставляет письма только на email владельца аккаунта Resend.
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
@@ -10,6 +11,8 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 interface Task {
   task_id: string
   kind: 'reminder_24h' | 'reminder_2h'
+  channel: 'email' | 'telegram'
+  telegram_chat_id: number | null
   attempts: number
   appointment_number: number
   starts_at: string
@@ -62,6 +65,39 @@ function renderEmail(t: Task) {
   return { subject, html, text }
 }
 
+type SendResult = { ok: true } | { ok: false; error: string; final: boolean }
+
+async function sendTelegram(t: Task, botToken: string): Promise<SendResult> {
+  const mail = renderEmail(t)
+  const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: t.telegram_chat_id, text: mail.text }),
+  })
+  if (res.ok) return { ok: true }
+  const body = await res.text()
+  // 403 — клиент заблокировал бота, 400 — чат не найден: повтор не поможет
+  return { ok: false, error: `Telegram ${res.status}: ${body.slice(0, 300)}`, final: res.status === 400 || res.status === 403 }
+}
+
+async function sendEmail(t: Task, apiKey: string, from: string): Promise<SendResult> {
+  const mail = renderEmail(t)
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      // Повтор того же напоминания не отправит второе письмо
+      'Idempotency-Key': `reminder-${t.task_id}`,
+    },
+    body: JSON.stringify({ from, to: [t.email], subject: mail.subject, html: mail.html, text: mail.text }),
+  })
+  if (res.ok) return { ok: true }
+  const body = await res.text()
+  // 4xx (кроме 429) — ошибка данных/настроек, повтор не поможет
+  return { ok: false, error: `Resend ${res.status}: ${body.slice(0, 300)}`, final: res.status >= 400 && res.status < 500 && res.status !== 429 }
+}
+
 Deno.serve(async (req) => {
   const { data: allowed, error: secretError } = await supabase.rpc('check_cron_secret', {
     p_secret: req.headers.get('x-cron-secret') ?? '',
@@ -69,8 +105,9 @@ Deno.serve(async (req) => {
   if (secretError || !allowed) return new Response('forbidden', { status: 403 })
 
   const apiKey = Deno.env.get('RESEND_API_KEY')
-  // Без ключа задачи не трогаем: они дождутся настройки, а не сгорят попытками
-  if (!apiKey) return Response.json({ ok: false, error: 'RESEND_API_KEY не задан' }, { status: 503 })
+  const botToken = Deno.env.get('TELEGRAM_BOT_TOKEN')
+  // Ни один канал не настроен — задачи не трогаем, они дождутся настройки
+  if (!apiKey && !botToken) return Response.json({ ok: false, error: 'Каналы отправки не настроены' }, { status: 503 })
   const from = Deno.env.get('RESEND_FROM') || 'Барбершоп <onboarding@resend.dev>'
 
   const { data, error } = await supabase.rpc('claim_due_reminders', { p_limit: 50 })
@@ -82,32 +119,23 @@ Deno.serve(async (req) => {
   const tasks = (data ?? []) as Task[]
   let sent = 0
   for (const t of tasks) {
-    const mail = renderEmail(t)
+    let result: SendResult
     try {
-      const res = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-          // Повтор того же напоминания не отправит второе письмо
-          'Idempotency-Key': `reminder-${t.task_id}`,
-        },
-        body: JSON.stringify({ from, to: [t.email], subject: mail.subject, html: mail.html, text: mail.text }),
-      })
-      if (res.ok) {
-        sent++
-        await supabase.rpc('complete_reminder', { p_task: t.task_id, p_ok: true })
+      if (t.channel === 'telegram') {
+        result = botToken ? await sendTelegram(t, botToken) : { ok: false, error: 'TELEGRAM_BOT_TOKEN не задан', final: false }
       } else {
-        const body = await res.text()
-        // 4xx (кроме 429) — ошибка данных/настроек, повтор не поможет
-        const final = res.status >= 400 && res.status < 500 && res.status !== 429
-        // В журнал — только код и текст Resend, без адреса и содержимого письма
-        console.warn('resend error', res.status, body.slice(0, 200))
-        await supabase.rpc('complete_reminder', { p_task: t.task_id, p_ok: false, p_error: `Resend ${res.status}: ${body.slice(0, 300)}`, p_final: final })
+        result = apiKey ? await sendEmail(t, apiKey, from) : { ok: false, error: 'RESEND_API_KEY не задан', final: false }
       }
     } catch (e) {
-      console.warn('network error', (e as Error).message)
-      await supabase.rpc('complete_reminder', { p_task: t.task_id, p_ok: false, p_error: `Сеть: ${(e as Error).message}` })
+      result = { ok: false, error: `Сеть: ${(e as Error).message}`, final: false }
+    }
+    if (result.ok) {
+      sent++
+      await supabase.rpc('complete_reminder', { p_task: t.task_id, p_ok: true })
+    } else {
+      // В журнал — только канал и ошибка сервиса, без адреса и текста сообщения
+      console.warn('send failed', t.channel, result.error.slice(0, 200))
+      await supabase.rpc('complete_reminder', { p_task: t.task_id, p_ok: false, p_error: result.error, p_final: result.final })
     }
   }
   return Response.json({ ok: true, claimed: tasks.length, sent })

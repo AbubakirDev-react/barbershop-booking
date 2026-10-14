@@ -3,7 +3,7 @@ import { useDb } from '@/data/store'
 import { useCurrentUser } from '@/data/hooks'
 import { usePageMeta } from '@/shared/seo'
 import type { ShopSettings } from '@/domain/types'
-import { Button, Field, Input, PhotoInput, Select, Textarea, useToast } from '@/shared/ui'
+import { Button, Checkbox, Field, Input, PhotoInput, Select, Textarea, useToast } from '@/shared/ui'
 
 export default function SettingsPage() {
   usePageMeta('Настройки', '', { noindex: true })
@@ -119,6 +119,24 @@ export default function SettingsPage() {
         <p className="muted" style={{ fontSize: 'var(--fs-xs)' }}>
           Если вы изменили рабочие часы мастеров, проверьте уже созданные записи: автоматически они не отменяются.
         </p>
+      </section>
+
+      <section className="panel stack" aria-labelledby="s-reminders">
+        <h2 id="s-reminders" style={{ fontSize: 'var(--fs-lg)' }}>Напоминания клиентам</h2>
+        <p style={{ fontSize: 'var(--fs-sm)' }}>
+          Telegram-бот:{' '}
+          {settings.telegramBotUsername ? (
+            <a href={`https://t.me/${settings.telegramBotUsername}`} target="_blank" rel="noopener noreferrer">@{settings.telegramBotUsername}</a>
+          ) : (
+            <span className="muted">не подключён</span>
+          )}
+        </p>
+        <Checkbox
+          label="Email-напоминания"
+          hint="Включайте, только если в Resend подтверждён ваш домен. Без домена письма доходят лишь до владельца аккаунта Resend."
+          checked={form.emailRemindersEnabled}
+          onChange={(e) => set('emailRemindersEnabled', e.target.checked)}
+        />
       </section>
 
     </>

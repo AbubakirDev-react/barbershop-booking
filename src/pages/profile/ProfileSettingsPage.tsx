@@ -30,29 +30,7 @@ export default function ProfileSettingsPage() {
     <>
       <h1>Настройки</h1>
 
-      <section className="panel stack" aria-labelledby="notif">
-        <h2 id="notif" style={{ fontSize: 'var(--fs-lg)' }}>Уведомления</h2>
-        <Checkbox
-          label="Напоминания о записи"
-          hint="За 24 часа и за 2 часа до визита. Только о ваших записях."
-          checked={p.reminders}
-          onChange={(e) => void save({ reminders: e.target.checked })}
-        />
-        <fieldset className="stack" style={{ border: 0, padding: 0, margin: 0, gap: 'var(--sp-2)' }} disabled={!p.reminders}>
-          <legend className="field__label" style={{ marginBottom: 'var(--sp-2)' }}>Канал связи</legend>
-          <label className="check">
-            <input type="radio" name="channel" checked={p.channel === 'email'} onChange={() => void save({ channel: 'email' })} />
-            <span>Email{!user.email && <span className="field__hint" style={{ display: 'block' }}>Email не указан — добавьте его в профиле</span>}</span>
-          </label>
-          <label className="check">
-            <input type="radio" name="channel" checked={p.channel === 'telegram'} onChange={() => void save({ channel: 'telegram' })} />
-            <span>Telegram</span>
-          </label>
-        </fieldset>
-        <div className="alert alert--warn">
-          Напоминания ставятся в очередь на сервере. Отправка заработает после подключения email-сервиса или Telegram-бота.
-        </div>
-      </section>
+      <NotificationsSection />
 
       <section className="panel stack" aria-labelledby="privacy">
         <h2 id="privacy" style={{ fontSize: 'var(--fs-lg)' }}>Приватность</h2>
@@ -130,5 +108,97 @@ export default function ProfileSettingsPage() {
         />
       )}
     </>
+  )
+}
+
+function NotificationsSection() {
+  const user = useCurrentUser()!
+  const settings = useDb((s) => s.settings)
+  const updatePrefs = useDb((s) => s.updatePrefs)
+  const createTelegramLink = useDb((s) => s.createTelegramLink)
+  const unlinkTelegram = useDb((s) => s.unlinkTelegram)
+  const reloadMe = useDb((s) => s.reloadMe)
+  const toast = useToast()
+  const [linking, setLinking] = useState(false)
+  const [waiting, setWaiting] = useState(false)
+  const p = user.prefs
+  const emailOn = settings.emailRemindersEnabled
+
+  const save = async (patch: Partial<UserPrefs>) => {
+    const res = await updatePrefs(patch)
+    if (!res.ok) toast(res.error, 'error')
+  }
+
+  const connect = async () => {
+    setLinking(true)
+    // Окно открываем сразу по клику, иначе браузер заблокирует его как всплывающее
+    const tab = window.open('', '_blank')
+    const res = await createTelegramLink()
+    setLinking(false)
+    if (!res.ok) {
+      tab?.close()
+      return toast(res.error, 'error')
+    }
+    if (tab) tab.location.href = res.value
+    else window.location.href = res.value
+    setWaiting(true)
+  }
+
+  return (
+    <section className="panel stack" aria-labelledby="notif">
+      <h2 id="notif" style={{ fontSize: 'var(--fs-lg)' }}>Напоминания о записи</h2>
+      <Checkbox
+        label="Напоминать о записи"
+        hint="За 24 часа и за 2 часа до визита. Только о ваших записях."
+        checked={p.reminders}
+        onChange={(e) => void save({ reminders: e.target.checked })}
+      />
+
+      <div className="stack" style={{ gap: 'var(--sp-2)' }}>
+        <p className="field__label">Telegram</p>
+        {user.telegramLinked ? (
+          <div className="row">
+            <span className="badge badge--completed">Подключён</span>
+            <Button size="sm" variant="ghost" onClick={async () => {
+              const res = await unlinkTelegram()
+              toast(res.ok ? 'Telegram отключён' : res.error, res.ok ? 'ok' : 'error')
+            }}>Отключить</Button>
+          </div>
+        ) : settings.telegramBotUsername ? (
+          <div className="stack" style={{ gap: 'var(--sp-2)' }}>
+            <div className="row">
+              <Button variant="primary" loading={linking} onClick={() => void connect()}>Подключить Telegram</Button>
+              {waiting && (
+                <Button onClick={async () => {
+                  await reloadMe()
+                  if (!useDb.getState().me?.telegramLinked) toast('Пока не подключено. В Telegram нажмите «Старт» у бота', 'error')
+                  else { setWaiting(false); toast('Telegram подключён') }
+                }}>Я нажал «Старт» — проверить</Button>
+              )}
+            </div>
+            <p className="field__hint">Откроется бот @{settings.telegramBotUsername}. Нажмите в нём «Старт» — и напоминания будут приходить туда.</p>
+          </div>
+        ) : (
+          <p className="muted" style={{ fontSize: 'var(--fs-sm)' }}>Барбершоп ещё не подключил Telegram-бота.</p>
+        )}
+      </div>
+
+      {emailOn && (
+        <label className="check">
+          <input
+            type="checkbox"
+            checked={p.channel === 'email' && !user.telegramLinked}
+            disabled={user.telegramLinked || !user.email}
+            onChange={(e) => void save({ channel: e.target.checked ? 'email' : 'telegram' })}
+          />
+          <span>
+            Email{user.email ? ` (${user.email})` : ''}
+            <span className="field__hint" style={{ display: 'block' }}>
+              {user.telegramLinked ? 'Сейчас напоминания приходят в Telegram' : user.email ? 'Если Telegram не подключён' : 'Email не указан — добавьте его в профиле'}
+            </span>
+          </span>
+        </label>
+      )}
+    </section>
   )
 }

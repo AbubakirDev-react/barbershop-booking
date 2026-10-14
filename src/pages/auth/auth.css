@@ -1,0 +1,27 @@
+.auth {
+  display: grid;
+  place-items: start center;
+  padding-block: var(--sp-7);
+}
+.auth__box {
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+.auth__clerk {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  font-size: var(--fs-sm);
+}
+.link-btn {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--c-steel);
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}

@@ -1,0 +1,108 @@
+/*
+ * Дизайн-токены. Палитра собрана из цветов барбер-пола:
+ * красный — только для главного действия («Записаться») и сигнальных состояний,
+ * сталь — для навигации и выделения, остальное — чернила и холодная бумага.
+ */
+:root {
+  --c-bg: #f1f2ee;
+  --c-surface: #ffffff;
+  --c-surface-2: #e7e9e3;
+  --c-ink: #13191f;
+  --c-ink-2: #3a434c;
+  --c-muted: #5d6670;
+  --c-line: #d3d7d0;
+  --c-line-strong: #a9afa7;
+  --c-steel: #3f6c9a;
+  --c-steel-soft: #dbe5ef;
+  --c-red: #b7352b;
+  --c-red-hover: #9c2b22;
+  --c-red-soft: #f5dedb;
+  --c-on-red: #ffffff;
+  --c-ok: #2f7a4b;
+  --c-ok-soft: #dcefe2;
+  --c-warn: #8a5a00;
+  --c-warn-soft: #f6ead0;
+  --c-focus: #3f6c9a;
+  --c-overlay: rgb(19 25 31 / 0.55);
+
+  --font-display: 'Unbounded', 'Arial Black', sans-serif;
+  --font-body: 'Golos Text', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* Модульная шкала 1.25 от 16px */
+  --fs-xs: 0.8rem;
+  --fs-sm: 0.889rem;
+  --fs-md: 1rem;
+  --fs-lg: 1.25rem;
+  --fs-xl: 1.563rem;
+  --fs-2xl: 1.953rem;
+  --fs-3xl: 2.441rem;
+  --fs-hero: clamp(2.1rem, 5.2vw, 4.4rem);
+
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --sp-8: 72px;
+  --sp-9: 112px;
+
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 16px;
+  --r-pill: 999px;
+
+  --shadow-pop: 0 12px 32px -12px rgb(19 25 31 / 0.35);
+  --container: 1160px;
+  --header-h: 64px;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --c-bg: #11161b;
+    --c-surface: #182027;
+    --c-surface-2: #1f2932;
+    --c-ink: #e9ece6;
+    --c-ink-2: #c4cac2;
+    --c-muted: #939ba3;
+    --c-line: #2c3741;
+    --c-line-strong: #46525d;
+    --c-steel: #86acd3;
+    --c-steel-soft: #1f3247;
+    --c-red: #d9493d;
+    --c-red-hover: #e8645a;
+    --c-red-soft: #3d1f1c;
+    --c-ok: #6cc28c;
+    --c-ok-soft: #173326;
+    --c-warn: #e2b55a;
+    --c-warn-soft: #3a2e14;
+    --c-focus: #86acd3;
+    --c-overlay: rgb(0 0 0 / 0.65);
+    --shadow-pop: 0 16px 40px -12px rgb(0 0 0 / 0.7);
+  }
+}
+
+:root[data-theme='dark'] {
+  --c-bg: #11161b;
+  --c-surface: #182027;
+  --c-surface-2: #1f2932;
+  --c-ink: #e9ece6;
+  --c-ink-2: #c4cac2;
+  --c-muted: #939ba3;
+  --c-line: #2c3741;
+  --c-line-strong: #46525d;
+  --c-steel: #86acd3;
+  --c-steel-soft: #1f3247;
+  --c-red: #d9493d;
+  --c-red-hover: #e8645a;
+  --c-red-soft: #3d1f1c;
+  --c-ok: #6cc28c;
+  --c-ok-soft: #173326;
+  --c-warn: #e2b55a;
+  --c-warn-soft: #3a2e14;
+  --c-focus: #86acd3;
+  --c-overlay: rgb(0 0 0 / 0.65);
+  --shadow-pop: 0 16px 40px -12px rgb(0 0 0 / 0.7);
+}

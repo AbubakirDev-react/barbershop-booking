@@ -1,0 +1,14 @@
+.bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 180px;
+  padding-top: var(--sp-2);
+  border-bottom: 1px solid var(--c-line-strong);
+}
+.bars__col { flex: 1; height: 100%; display: flex; align-items: flex-end; min-width: 2px; }
+.bars__bar { width: 100%; min-height: 2px; background: var(--c-steel); border-radius: 2px 2px 0 0; }
+.bars__col:hover .bars__bar { background: var(--c-red); }
+
+.meter { height: 8px; border-radius: var(--r-pill); background: var(--c-surface-2); overflow: hidden; margin-top: 4px; }
+.meter__fill { height: 100%; background: var(--c-steel); border-radius: var(--r-pill); }

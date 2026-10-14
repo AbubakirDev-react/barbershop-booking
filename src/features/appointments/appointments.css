@@ -1,0 +1,43 @@
+.appt-details { display: grid; gap: var(--sp-5); }
+.appt-details__num { font-family: var(--font-display); font-weight: 600; font-size: var(--fs-lg); }
+.appt-details__items td,
+.appt-details__items th { padding-inline: 0; }
+.appt-details__items td + td,
+.appt-details__items th + th { padding-left: var(--sp-3); }
+.appt-details__history summary { cursor: pointer; font-weight: 600; font-size: var(--fs-sm); }
+.appt-details__history ol {
+  margin: var(--sp-3) 0 0;
+  padding-left: 1.2em;
+  display: grid;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
+}
+.appt-actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+
+/* Строка записи в списках */
+.appt-row {
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  gap: var(--sp-4);
+  align-items: center;
+  width: 100%;
+  padding: var(--sp-4);
+  border: 0;
+  border-bottom: 1px solid var(--c-line);
+  background: transparent;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.appt-row:hover { background: var(--c-surface-2); }
+.appt-row:last-child { border-bottom: 0; }
+.appt-row__time { font-family: var(--font-display); font-weight: 600; line-height: 1.2; }
+.appt-row__time small { display: block; font-family: var(--font-body); font-weight: 400; font-size: var(--fs-xs); color: var(--c-muted); }
+.appt-row__main { min-width: 0; display: grid; gap: 2px; }
+.appt-row__title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.appt-row__meta { font-size: var(--fs-sm); color: var(--c-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.appt-row__side { display: grid; justify-items: end; gap: 4px; }
+@media (max-width: 560px) {
+  .appt-row { grid-template-columns: 56px 1fr; }
+  .appt-row__side { grid-column: 2; justify-items: start; }
+}

@@ -1,0 +1,90 @@
+.price-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.price-list__item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-4);
+  padding: var(--sp-4) 0;
+  border-bottom: 1px solid var(--c-line);
+}
+.price-list__item:first-child { border-top: 1px solid var(--c-line); }
+.price-list__photo {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: var(--r-sm);
+  flex: none;
+}
+.price-list__main { flex: 1; min-width: 0; }
+.price-list__line {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+}
+.price-list__name {
+  font-weight: 600;
+  font-size: var(--fs-md);
+}
+.price-list__dots {
+  flex: 1;
+  min-width: 16px;
+  border-bottom: 2px dotted var(--c-line-strong);
+  transform: translateY(-4px);
+}
+.price-list__price {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: var(--fs-md);
+  white-space: nowrap;
+}
+.price-list__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-3);
+  margin-top: 2px;
+  font-size: var(--fs-sm);
+}
+.price-list__desc { color: var(--c-ink-2); flex-basis: 100%; max-width: 64ch; }
+.price-list__action { flex: none; align-self: center; }
+
+.cat-heading {
+  font-size: var(--fs-lg);
+  margin: var(--sp-7) 0 var(--sp-3);
+}
+.cat-heading:first-child { margin-top: 0; }
+
+/* ===== Мастера ===== */
+.masters {
+  display: grid;
+  gap: var(--sp-6) var(--sp-5);
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+.master {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.master__photo {
+  aspect-ratio: 4 / 5;
+  width: 100%;
+  object-fit: cover;
+  border-radius: var(--r-md);
+}
+.master__photo.photo-empty {
+  font-family: var(--font-display);
+  font-size: var(--fs-3xl);
+  color: var(--c-line-strong);
+}
+.master__name { font-size: var(--fs-lg); }
+.master__spec { color: var(--c-steel); font-weight: 600; font-size: var(--fs-sm); }
+.master__bio { color: var(--c-ink-2); font-size: var(--fs-sm); }
+.master__facts { font-size: var(--fs-sm); display: grid; gap: 2px; }
+
+/* ===== Часы работы ===== */
+.hours { width: 100%; max-width: 360px; border-collapse: collapse; font-size: var(--fs-sm); }
+.hours td { padding: 6px 0; border-bottom: 1px solid var(--c-line); }
+.hours td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+.hours tr.today td { font-weight: 700; }

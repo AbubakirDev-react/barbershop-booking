@@ -1,0 +1,17 @@
+.reviews-grid {
+  display: grid;
+  gap: var(--sp-5);
+}
+@media (min-width: 768px) {
+  .reviews-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+}
+.review {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding-left: var(--sp-4);
+  border-left: 2px solid var(--c-line-strong);
+}
+.review__text { max-width: 62ch; }
+.review__author { font-size: var(--fs-sm); font-weight: 600; }
+.review__date { font-size: var(--fs-xs); }

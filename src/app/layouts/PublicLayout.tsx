@@ -34,8 +34,9 @@ export function PublicLayout() {
     }
   }, [menuOpen])
 
-  const accountLink = user ? (isStaffRole(user.role) ? '/dashboard' : '/profile') : '/login'
-  const accountLabel = user ? (isStaffRole(user.role) ? 'Панель' : 'Профиль') : 'Войти'
+  const accountLink = user ? '/profile' : '/login'
+  const accountLabel = user ? 'Профиль' : 'Войти'
+  const isStaff = isStaffRole(user?.role)
 
   return (
     <div className="site">
@@ -57,7 +58,13 @@ export function PublicLayout() {
 
           <div className="site-header__actions">
             <ThemeToggle />
-            <Link to={accountLink} className="btn btn--ghost site-header__account">
+            {isStaff && (
+              <Link to="/dashboard" className="btn btn--ghost site-header__account" aria-label="Панель управления">
+                <Icon name="grid" />
+                <span>Панель</span>
+              </Link>
+            )}
+            <Link to={accountLink} className="btn btn--ghost site-header__account" aria-label={accountLabel}>
               <Icon name="user" />
               <span>{accountLabel}</span>
             </Link>
@@ -88,6 +95,7 @@ export function PublicLayout() {
                 {n.label}
               </NavLink>
             ))}
+            {isStaff && <NavLink to="/dashboard" className="mobile-menu__link">Панель управления</NavLink>}
             <NavLink to={accountLink} className="mobile-menu__link">{accountLabel}</NavLink>
           </nav>
         </div>

@@ -63,10 +63,10 @@ export default function DashboardLayout() {
           ))}
         </nav>
         <div className="dash__user">
-          <div style={{ minWidth: 0 }}>
+          <Link to="/profile" className="dash__profile" title="Мой профиль: записи, Telegram, настройки">
             <p className="dash__user-name">{user.name} {user.surname}</p>
-            <p className="muted" style={{ fontSize: 'var(--fs-xs)' }}>{ROLE_LABEL[user.role]}</p>
-          </div>
+            <p className="muted" style={{ fontSize: 'var(--fs-xs)' }}>{ROLE_LABEL[user.role]} · Мой профиль</p>
+          </Link>
           <button
             className="btn btn--ghost btn--icon btn--sm"
             aria-label="Выйти"

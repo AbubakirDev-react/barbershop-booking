@@ -27,6 +27,10 @@ npm run build
 5. `..._split_write_policies.sql` — оптимизация политик
 6. `..._save_master.sql` — атомарное сохранение мастера с услугами и расписанием
 7. `..._master_user.sql` — привязка аккаунта барбера к мастеру (set_master_user)
+8. `..._reminders.sql` — очередь напоминаний: claim_due_reminders / complete_reminder (только service_role), секрет cron в Vault
+9. `..._reminders_cron.sql` — pg_cron каждые 5 минут вызывает Edge Function `send-reminders`
+
+Edge Function: `supabase/functions/send-reminders` (Resend; Idempotency-Key против дублей; до 3 попыток; проверка статуса записи перед отправкой).
 
 Проверка правил на живой базе: `supabase/tests/rpc_smoke.sql` (все проверки прошли, данные откатываются).
 
@@ -47,19 +51,26 @@ npm run build
 - Часовой пояс: слоты, даты и время на сайте считаются в поясе барбершопа (`src/domain/tz.ts`), тесты на разные пояса
 - Git: репозиторий инициализирован, первый коммит; `vercel.json` для SPA-маршрутов
 
+## Деплой
+
+- GitHub (приватный): https://github.com/AbubakirDev-react/barbershop-booking
+- Vercel: https://barbershop-booking-xi.vercel.app (автодеплой при push в main)
+
 ## Требует тебя
 
 1. (сделано) Third-Party Auth Clerk в Supabase, роль владельца
 2. Проверить часовой пояс в Панели -> Настройки (сейчас Europe/Moscow; устройство владельца — UTC+5)
 3. Для деплоя: в терминале `gh auth login` и `npx vercel login`, затем сказать мне
-4. Выбрать канал напоминаний: email (Resend) или Telegram-бот
+4. Supabase -> Edge Functions -> Secrets: добавить RESEND_API_KEY (ключ Resend). Без него функция отвечает 503 и задачи ждут.
+5. Для писем клиентам — подтвердить свой домен в Resend и добавить секрет RESEND_FROM (например `Барбершоп <noreply@домен.ru>`).
+   Пока домена нет, Resend доставляет письма только на email владельца аккаунта Resend.
 
 ## НЕ сделано
 
-- Отправка напоминаний (email/Telegram): задачи создаются в `notification_tasks`, но нет Edge Function + Cron для отправки — нужен сервис/бот и ключи
+- Telegram-канал напоминаний (задачи помечаются «не подключён»)
 - Аналитика считается в браузере по записям за последний год (нет серверной агрегации)
 - Интеграция отзывов с 2GIS/Яндекс — только ручное добавление со ссылкой
-- E2E Playwright, деплой на Vercel, GitHub-репозиторий, production-инстанс Clerk
+- E2E Playwright, production-инстанс Clerk (сейчас dev-ключи — на сайте плашка Development mode), свой домен
 - В Clerk dev пароль минимум 15 символов (настройка Clerk по умолчанию) — можно смягчить в Clerk
 
 ## Решения

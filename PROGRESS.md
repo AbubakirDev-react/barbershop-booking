@@ -30,7 +30,11 @@ npm run build
 8. `..._reminders.sql` — очередь напоминаний: claim_due_reminders / complete_reminder (только service_role), секрет cron в Vault
 9. `..._reminders_cron.sql` — pg_cron каждые 5 минут вызывает Edge Function `send-reminders`
 
-Edge Function: `supabase/functions/send-reminders` (Resend; Idempotency-Key против дублей; до 3 попыток; проверка статуса записи перед отправкой).
+10. `..._telegram.sql` — привязка Telegram (одноразовый код, chat_id в profiles), флаг email-напоминаний, очередь для двух каналов
+
+Edge Functions: `supabase/functions/send-reminders` (Telegram + Resend), `supabase/functions/telegram-webhook`
+(бот @barbershopReminder_bot, вебхук с секретом из Vault; `?setup=1` регистрирует вебхук).
+Старое описание: `supabase/functions/send-reminders` (Resend; Idempotency-Key против дублей; до 3 попыток; проверка статуса записи перед отправкой).
 
 Проверка правил на живой базе: `supabase/tests/rpc_smoke.sql` (все проверки прошли, данные откатываются).
 
@@ -67,7 +71,7 @@ Edge Function: `supabase/functions/send-reminders` (Resend; Idempotency-Key пр
 
 ## НЕ сделано
 
-- Telegram-канал напоминаний (задачи помечаются «не подключён»)
+- Свой домен (позже): email-напоминания клиентам, production Clerk, адрес сайта вместо vercel.app
 - Аналитика считается в браузере по записям за последний год (нет серверной агрегации)
 - Интеграция отзывов с 2GIS/Яндекс — только ручное добавление со ссылкой
 - E2E Playwright, production-инстанс Clerk (сейчас dev-ключи — на сайте плашка Development mode), свой домен

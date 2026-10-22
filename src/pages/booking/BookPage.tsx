@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useDb } from '@/data/store'
-import { useCurrentUser, usePublicMasters, usePublicServices, useSortedCategories } from '@/data/hooks'
+import { usePublicMasters, usePublicServices, useSortedCategories } from '@/data/hooks'
 import { usePageMeta } from '@/shared/seo'
 import { calcTotals, MAX_SERVICES_PER_APPOINTMENT, toItem } from '@/domain/pricing'
 import { findNextSlot } from '@/domain/slots'
@@ -9,8 +9,8 @@ import { formatDateTime, formatDuration, formatRub, formatTime, formatWeekdayDat
 import type { Appointment, Master } from '@/domain/types'
 import { workDaysText } from '@/features/catalog/MasterCard'
 import { SlotPicker } from '@/features/booking/SlotPicker'
-import { Avatar, Button, Checkbox, EmptyState, Field, Icon, Input, StatusBadge } from '@/shared/ui'
-import { normalizePhone, phoneSchema } from '@/shared/validation'
+import { Avatar, Button, EmptyState, Field, Icon, Input, StatusBadge } from '@/shared/ui'
+import { ClientLoginForm } from '@/features/client/ClientLoginForm'
 import '@/features/booking/booking.css'
 
 const STEPS = ['Мастер', 'Услуги', 'Дата и время', 'Подтверждение'] as const
@@ -362,39 +362,23 @@ function ConfirmStep({
   onSlotLost: () => void
   onBack: () => void
 }) {
-  const user = useCurrentUser()
+  const client = useDb((s) => s.client)
   const settings = useDb((s) => s.settings)
-  const createAppointment = useDb((s) => s.createAppointment)
-  const updateProfile = useDb((s) => s.updateProfile)
-  const updatePrefs = useDb((s) => s.updatePrefs)
-  const [phone, setPhone] = useState(user?.phone ?? '')
+  const clientBook = useDb((s) => s.clientBook)
+  const clientLogout = useDb((s) => s.clientLogout)
   const [note, setNote] = useState('')
   const [error, setError] = useState('')
-  const [phoneError, setPhoneError] = useState('')
   const [busy, setBusy] = useState(false)
 
-  const submit = async () => {
-    if (!user) return
+  const book = async () => {
     setError('')
-    const parsed = phoneSchema.safeParse(phone)
-    if (!parsed.success) return setPhoneError(parsed.error.issues[0]!.message)
-    setPhoneError('')
     setBusy(true)
-    const normalized = normalizePhone(phone)
-    if (normalized !== user.phone) {
-      // Телефон сохраняем в профиль, но запись не зависит от успеха этого шага
-      const saved = await updateProfile({ name: user.name, surname: user.surname, email: user.email, phone: normalized })
-      if (!saved.ok) console.warn('[booking] телефон не сохранён в профиль:', saved.error)
-    }
-    const res = await createAppointment({
+    const res = await clientBook({
       requestId: draft.requestId,
       masterId: master.id,
       serviceIds: draft.serviceIds,
       startsAt: draft.startsAt!,
-      clientName: [user.name, user.surname].filter(Boolean).join(' '),
-      clientPhone: normalized,
       note,
-      source: 'online',
     })
     setBusy(false)
     if (res.ok) return onCreated(res.value)
@@ -403,61 +387,45 @@ function ConfirmStep({
 
   return (
     <section className="book__step">
-      <h2>Проверьте запись</h2>
-      <p className="muted">Запись будет создана со статусом «Ожидает подтверждения» — мастер подтвердит её.</p>
+      <h2>Почти готово</h2>
+      <p className="muted">Мастер подтвердит запись. Оплата — в барбершопе.</p>
 
       <div className="stack">
         <dl className="dl">
           <dt>Адрес</dt>
-          <dd>{settings.address || 'Уточните адрес по телефону'}</dd>
+          <dd>{settings.address || 'Уточните по телефону'}</dd>
           <dt>Отмена</dt>
-          <dd>Онлайн — не позднее чем за {settings.cancelBeforeHours} ч до начала</dd>
-          <dt>Перенос</dt>
-          <dd>Онлайн — не позднее чем за {settings.rescheduleBeforeHours} ч до начала</dd>
-          <dt>Оплата</dt>
-          <dd>В барбершопе</dd>
+          <dd>Онлайн — не позднее чем за {settings.cancelBeforeHours} ч</dd>
         </dl>
 
-        {!user ? (
-          <div className="alert">
-            <span>
-              Чтобы подтвердить запись, войдите в аккаунт — выбор сохранится.{' '}
-              <Link to="/login?next=/book">Войти</Link> или <Link to="/register?next=/book">зарегистрироваться</Link>.
+        {client ? (
+          <div className="book__who">
+            <span className="avatar" style={{ ['--size' as string]: '44px' }} aria-hidden>{client.name.slice(0, 1).toUpperCase()}</span>
+            <span style={{ minWidth: 0 }}>
+              <strong>{client.name}</strong>
+              <span className="muted"> · {client.phone}</span>
             </span>
+            <button className="link-btn" style={{ marginLeft: 'auto' }} onClick={() => void clientLogout()}>Это не я</button>
           </div>
         ) : (
-          <>
-            <div className="form-grid form-grid--2">
-              <Field label="Имя">{(p) => <Input {...p} value={[user.name, user.surname].filter(Boolean).join(' ')} disabled />}</Field>
-              <Field label="Телефон" error={phoneError} hint="Для связи по записи">
-                {(p) => <Input {...p} type="tel" inputMode="tel" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />}
-              </Field>
-              <Field label="Комментарий для мастера" hint="Необязательно" className="span-2">
-                {(p) => <Input {...p} value={note} maxLength={200} onChange={(e) => setNote(e.target.value)} />}
-              </Field>
-            </div>
-            <Checkbox
-              label="Напомнить о записи за 24 и за 2 часа"
-              hint={
-                user.telegramLinked
-                  ? 'Придут в Telegram.'
-                  : settings.emailRemindersEnabled && user.prefs.channel === 'email' && user.email
-                    ? `Придут на ${user.email}.`
-                    : 'Чтобы получать напоминания, подключите Telegram в профиле → Настройки.'
-              }
-              checked={user.prefs.reminders}
-              onChange={(e) => void updatePrefs({ reminders: e.target.checked })}
-            />
-          </>
+          <div className="book__login">
+            <p className="field__label" style={{ marginBottom: 'var(--sp-3)' }}>Как с вами связаться</p>
+            {/* После входа форма исчезнет, и запись создастся одной кнопкой ниже */}
+            <ClientLoginForm submitLabel="Продолжить" />
+          </div>
+        )}
+
+        {client && (
+          <Field label="Комментарий для мастера" hint="Необязательно">
+            {(p) => <Input {...p} value={note} maxLength={200} onChange={(e) => setNote(e.target.value)} />}
+          </Field>
         )}
 
         {error && (
           <div className="alert alert--error" role="alert">
             <span>
               {error}{' '}
-              {error.includes('занято') && (
-                <button className="link-btn" onClick={onSlotLost}>Выбрать другое время</button>
-              )}
+              {error.includes('занято') && <button className="link-btn" onClick={onSlotLost}>Выбрать другое время</button>}
             </span>
           </div>
         )}
@@ -467,9 +435,11 @@ function ConfirmStep({
         <Button variant="ghost" onClick={onBack}>
           <Icon name="chevronLeft" /> Назад
         </Button>
-        <Button variant="book" size="lg" disabled={!user} loading={busy} onClick={() => void submit()}>
-          Записаться
-        </Button>
+        {client && (
+          <Button variant="book" size="lg" loading={busy} onClick={() => void book()}>
+            Записаться
+          </Button>
+        )}
       </div>
     </section>
   )
@@ -477,18 +447,25 @@ function ConfirmStep({
 
 function BookingSuccess({ appt, onAgain }: { appt: Appointment; onAgain: () => void }) {
   const master = useDb((s) => s.masters.find((m) => m.id === appt.masterId))
+  const client = useDb((s) => s.client)
+  const bot = useDb((s) => s.settings.telegramBotUsername)
   return (
     <div className="container">
       <section className="success" aria-live="polite">
-        <p className="muted">Запись создана</p>
+        <span className="success__check" aria-hidden>
+          <Icon name="check" size={40} />
+        </span>
+        <p className="muted">Вы записаны</p>
         <p className="success__num num">№{appt.number}</p>
-        <div><StatusBadge status={appt.status} /></div>
         <p style={{ fontSize: 'var(--fs-lg)' }}>
           {formatDateTime(appt.startsAt)}, мастер {master?.name}.
         </p>
-        <p className="muted">Мастер подтвердит запись — статус обновится в профиле.</p>
+        <div><StatusBadge status={appt.status} /></div>
+        {bot && client && !client.telegramLinked && (
+          <p className="muted">Хотите напоминание? Подключите Telegram в разделе «Мои записи».</p>
+        )}
         <div className="row">
-          <Link className="btn btn--primary" to={`/profile/appointments/${appt.id}`}>Открыть запись</Link>
+          <Link className="btn btn--primary" to="/me">Мои записи</Link>
           <Button variant="ghost" onClick={onAgain}>Записаться ещё</Button>
         </div>
       </section>

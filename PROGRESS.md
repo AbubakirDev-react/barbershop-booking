@@ -1,3 +1,25 @@
+# ТЕКУЩАЯ ЗАДАЧА (2026-10-22) — переделка
+
+Решения пользователя:
+- GitHub Pages; репозиторий сделать публичным
+- Clerk убрать полностью
+- Клиенты без регистрации: имя + телефон при записи; номер есть -> вход (имя должно совпасть), нет -> создать. Сессия в браузере (токен). Без доп. защиты (выбор пользователя)
+- ТРИ отдельных сайта из одного репо: клиентский (/), владелец (/owner/), мастер (/master/); сотрудники входят через Supabase Auth (email+пароль)
+- Новый дизайн: светлый, живой, анимированный, современный, без лишнего
+
+Статус на момент остановки: ветка wip/three-sites, код НЕ собирается.
+Сделано: store.ts (клиентская сессия), main.tsx, apps/client/ClientApp, apps/staff/{StaffApp,StaffGate,StaffLoginPage}, DashboardLayout(kind), PublicLayout, pages/client/MyBookingsPage, features/client/ClientLoginForm; Clerk удалён.
+Осталось: BookPage (ConfirmStep -> ClientLoginForm + clientBook, ссылка успеха /me), ReviewsPage (clientAddReview), AppointmentDetails/staff.tsx/SettingsPage/UsersPage (useCurrentUser), hooks.ts, vite.config (base по APP), scripts сборки 3 сайтов + 404.html, GitHub Actions Pages, редизайн (tokens/components: --c-accent, --c-accent-soft, --shadow-card, --ease-out, .reveal, .page-enter, .page-loading), репо публичным.
+Важно: main ещё на старой версии (Clerk) — сайт на Vercel работает, но база уже новая; онлайн-запись на старом сайте может ломаться (create_appointment теперь только для сотрудников).
+
+План:
+1. [x] Миграция 12 (ПРИМЕНЕНА к базе и проверена): clients, client_sessions, appointments.client_id, RPC client_* (login, me, book, appointments, cancel, reschedule, telegram, review), напоминания для clients
+2. [~] (В РАБОТЕ, ветка wip/three-sites) Фронт: убрать Clerk, Supabase Auth для персонала, клиентская сессия
+3. [ ] Три приложения: src/apps/{client,owner,master}, сборка с разными base
+4. [ ] Редизайн
+5. [ ] GitHub Actions -> Pages, репо публичный
+6. [ ] Проверка; перенос роли владельца на новый аккаунт Supabase Auth (через SQL после регистрации)
+
 # PROGRESS — Barbershop
 
 Последнее обновление: 2026-10-14.

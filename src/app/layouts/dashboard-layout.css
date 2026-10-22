@@ -106,3 +106,26 @@
 
 .dash__profile { min-width: 0; text-decoration: none; border-radius: var(--r-sm); padding: 2px 4px; margin: -2px -4px; }
 .dash__profile:hover { background: var(--c-surface-2); }
+
+/* ===== Редизайн v2 ===== */
+.dash__side { border-right: 0; box-shadow: 1px 0 0 var(--c-line); }
+.dash__brand { gap: var(--sp-3); border-bottom: 0; padding-top: var(--sp-2); }
+.dash__logo {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: 12px;
+  background: var(--c-accent);
+  color: var(--c-accent-ink);
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+.dash__shop { display: block; font-weight: 600; font-size: var(--fs-sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dash__kind { display: block; font-size: var(--fs-xs); color: var(--c-accent); font-weight: 600; }
+.dash__link { border-radius: var(--r-pill); transition: background 0.2s var(--ease), color 0.2s var(--ease); }
+.dash__link.active { background: var(--c-accent); color: var(--c-accent-ink); box-shadow: 0 8px 18px -10px var(--c-accent); }
+.dash__top { border-bottom: 0; background: color-mix(in srgb, var(--c-bg) 85%, transparent); }
+.stat { border: 0; border-radius: var(--r-lg); box-shadow: var(--shadow-card); }
+.cal { border: 0; border-radius: var(--r-lg); box-shadow: var(--shadow-card); }

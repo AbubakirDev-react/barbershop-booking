@@ -9,6 +9,7 @@ import { ReviewsBlock } from '@/features/reviews/ReviewsBlock'
 import { ContactBlock } from '@/features/catalog/ContactBlock'
 import { EmptyState } from '@/shared/ui'
 import { useLocalBusinessSchema } from '@/shared/schema'
+import { formatRub } from '@/domain/format'
 import './home.css'
 
 export default function HomePage() {
@@ -27,19 +28,24 @@ export default function HomePage() {
       <section className="hero">
         <div className="container hero__inner">
           <div className="hero__text">
-            <h1 className="hero__title">{shopName}</h1>
-            {settings.description ? (
-              <p className="hero__lead">{settings.description}</p>
-            ) : (
-              <p className="hero__lead muted">Выберите мастера, услуги и удобное время — запись займёт пару минут.</p>
-            )}
-            <div className="row hero__cta">
+            {/* Название появляется по словам — единственная «большая» анимация страницы */}
+            <h1 className="hero__title" aria-label={shopName}>
+              {shopName.split(' ').map((w, i) => (
+                <span key={i} className="hero__word" style={{ ['--i' as string]: i }} aria-hidden>
+                  {w}{' '}
+                </span>
+              ))}
+            </h1>
+            <p className="hero__lead reveal" style={{ ['--d' as string]: '350ms' }}>
+              {settings.description || 'Выберите мастера, услуги и удобное время — запись за минуту, без регистрации.'}
+            </p>
+            <div className="row hero__cta reveal" style={{ ['--d' as string]: '450ms' }}>
               <Link to="/book" className="btn btn--book btn--lg">Записаться</Link>
               <Link to="/services" className="btn btn--lg">Услуги и цены</Link>
             </div>
-            {settings.address && <p className="hero__address">{settings.address}</p>}
+            {settings.address && <p className="hero__address reveal" style={{ ['--d' as string]: '550ms' }}>{settings.address}</p>}
           </div>
-          <div className="hero__visual">
+          <div className="hero__visual reveal" style={{ ['--d' as string]: '200ms' }}>
             {settings.heroPhoto ? (
               <img src={settings.heroPhoto} alt={`Интерьер: ${shopName}`} className="hero__photo" />
             ) : (
@@ -48,6 +54,7 @@ export default function HomePage() {
             <div className="hero__pole pole" aria-hidden />
           </div>
         </div>
+        {services.length > 0 && <ServiceTicker services={services} />}
       </section>
 
       {isEmpty && (
@@ -111,5 +118,21 @@ export default function HomePage() {
         </div>
       </section>
     </>
+  )
+}
+
+/** Бегущая строка с услугами и ценами: двойной набор для бесшовной петли */
+function ServiceTicker({ services }: { services: { id: string; name: string; price: number }[] }) {
+  const items = services.slice(0, 10)
+  return (
+    <div className="ticker" aria-hidden>
+      <div className="ticker__track">
+        {[...items, ...items].map((s, i) => (
+          <span key={`${s.id}-${i}`} className="ticker__item">
+            {s.name} <b>{formatRub(s.price)}</b>
+          </span>
+        ))}
+      </div>
+    </div>
   )
 }

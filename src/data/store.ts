@@ -4,6 +4,7 @@ import type { PostgrestError } from '@supabase/supabase-js'
 import { DEFAULT_CATEGORIES, DEFAULT_SETTINGS } from './defaults'
 import { PHOTO_BUCKET, supabase } from './supabase'
 import { setShopTimezone } from '@/domain/tz'
+import { APP } from '@/app/appKind'
 import {
   fromSettings,
   toAppointment,
@@ -39,7 +40,6 @@ import type {
   ShopSettings,
   TimeOff,
   User,
-  UserPrefs,
 } from '@/domain/types'
 
 /**
@@ -90,6 +90,25 @@ export interface DbState {
   users: User[]
   me: User | null
   authReady: boolean
+  /** Клиент без регистрации (клиентский сайт): определяется токеном в браузере */
+  client: ClientInfo | null
+  clientReady: boolean
+}
+
+export interface ClientInfo {
+  id: string
+  name: string
+  phone: string
+  reminders: boolean
+  telegramLinked: boolean
+}
+
+export interface ClientBookInput {
+  requestId: string
+  masterId: string
+  serviceIds: string[]
+  startsAt: string
+  note?: string
 }
 
 export interface CreateAppointmentInput {
@@ -139,14 +158,20 @@ interface DbActions {
   setIdentity: (identity: AuthIdentity | null) => Promise<void>
   refreshPrivate: () => Promise<void>
 
-  updateProfile: (patch: Pick<User, 'name' | 'surname' | 'phone' | 'email'>) => Promise<Result>
-  updatePrefs: (patch: Partial<UserPrefs>) => Promise<Result>
-  deleteProfile: () => Promise<Result>
   claimFirstOwner: () => Promise<Result<boolean>>
   hasOwner: () => Promise<Result<boolean>>
-  createTelegramLink: () => Promise<Result<string>>
-  unlinkTelegram: () => Promise<Result>
-  reloadMe: () => Promise<void>
+
+  // клиент без регистрации
+  clientRestore: () => Promise<void>
+  clientLogin: (name: string, phone: string) => Promise<Result<ClientInfo>>
+  clientLogout: () => Promise<void>
+  clientBook: (input: ClientBookInput) => Promise<Result<Appointment>>
+  clientCancel: (id: string, reason?: string) => Promise<Result>
+  clientReschedule: (id: string, startsAt: string) => Promise<Result>
+  clientSetReminders: (on: boolean) => Promise<Result>
+  clientTelegramLink: () => Promise<Result<string>>
+  clientUnlinkTelegram: () => Promise<Result>
+  clientAddReview: (input: { rating: number; text: string; appointmentId: string }) => Promise<Result>
 
   createAppointment: (input: CreateAppointmentInput) => Promise<Result<Appointment>>
   changeStatus: (id: string, to: AppointmentStatus, reason?: string) => Promise<Result>
@@ -164,7 +189,6 @@ interface DbActions {
   addTimeOff: (input: Omit<TimeOff, 'id'>) => Promise<Result>
   removeTimeOff: (id: string) => Promise<Result>
 
-  addSiteReview: (input: { rating: number; text: string; appointmentId: string }) => Promise<Result>
   addManualReview: (input: Pick<Review, 'authorName' | 'rating' | 'text' | 'source' | 'sourceUrl'>) => Promise<Result>
   setReviewStatus: (id: string, status: ReviewStatus) => Promise<Result>
 
@@ -198,6 +222,25 @@ async function dropPhoto(oldPath: string | null | undefined, newPath: string | n
   if (!oldPath || oldPath === newPath) return
   const { error } = await supabase.storage.from(PHOTO_BUCKET).remove([oldPath])
   if (error) console.warn('[photos] не удалось удалить старый файл', oldPath, error.message)
+}
+
+const TOKEN_KEY = 'bb-client-token'
+
+function readToken(): string | null {
+  try {
+    return localStorage.getItem(TOKEN_KEY)
+  } catch {
+    return null
+  }
+}
+
+function writeToken(token: string | null) {
+  try {
+    if (token) localStorage.setItem(TOKEN_KEY, token)
+    else localStorage.removeItem(TOKEN_KEY)
+  } catch {
+    // Хранилище недоступно (приватный режим) — клиента придётся вводить заново
+  }
 }
 
 export const useDb = create<DbState & DbActions>()((set, get) => {
@@ -243,7 +286,11 @@ export const useDb = create<DbState & DbActions>()((set, get) => {
 
   const loadPrivate = async () => {
     const me = get().me
-    if (!me) {
+    if (APP === 'client') {
+      await loadClientAppointments()
+      return
+    }
+    if (!me || !isStaff(me)) {
       set({ appointments: [], notifications: [], users: [] })
       return
     }
@@ -266,6 +313,18 @@ export const useDb = create<DbState & DbActions>()((set, get) => {
     })
   }
 
+  const loadClientAppointments = async () => {
+    const token = readToken()
+    if (!token || !get().client) {
+      set({ appointments: [] })
+      return
+    }
+    const { data, error } = await supabase.rpc('client_appointments', { p_token: token })
+    if (error) throw error
+    const rows = (data ?? []) as (AppointmentRow & { has_review: boolean })[]
+    set({ appointments: rows.map((r) => ({ ...toAppointment(r), hasReview: r.has_review })) })
+  }
+
   /** Обёртка: выполнить изменение, перечитать данные, вернуть Result */
   const mutate = async <T,>(
     run: () => PromiseLike<{ data: T | null; error: PostgrestError | null }>,
@@ -283,8 +342,6 @@ export const useDb = create<DbState & DbActions>()((set, get) => {
     }
   }
 
-  const requireMe = () => get().me
-
   return {
     status: 'loading',
     loadError: null,
@@ -300,6 +357,8 @@ export const useDb = create<DbState & DbActions>()((set, get) => {
     users: [],
     me: null,
     authReady: false,
+    client: null,
+    clientReady: false,
 
     loadPublic: async () => {
       try {
@@ -345,60 +404,6 @@ export const useDb = create<DbState & DbActions>()((set, get) => {
       }
     },
 
-    updateProfile: async (patch) => {
-      const me = requireMe()
-      if (!me) return fail('Войдите в аккаунт')
-      const res = await mutate(
-        () => supabase.from('profiles').update({ name: patch.name, surname: patch.surname, phone: patch.phone, email: patch.email }).eq('id', me.id).select('*').single<ProfileRow>(),
-        [],
-      )
-      if (res.ok && res.value) set({ me: toUser(res.value) })
-      return res.ok ? ok(undefined) : res
-    },
-
-    updatePrefs: async (patch) => {
-      const me = requireMe()
-      if (!me) return fail('Войдите в аккаунт')
-      const row: Partial<ProfileRow> = {}
-      if (patch.reminders !== undefined) row.reminders = patch.reminders
-      if (patch.channel !== undefined) row.channel = patch.channel
-      if (patch.marketing !== undefined) row.marketing = patch.marketing
-      const res = await mutate(() => supabase.from('profiles').update(row).eq('id', me.id).select('*').single<ProfileRow>(), [])
-      if (res.ok && res.value) set({ me: toUser(res.value) })
-      return res.ok ? ok(undefined) : res
-    },
-
-    deleteProfile: async () => {
-      const me = requireMe()
-      if (!me) return fail('Войдите в аккаунт')
-      if (me.role !== 'client') return fail('Сотрудник не может удалить аккаунт сам — обратитесь к владельцу')
-      const res = await mutate(() => supabase.from('profiles').delete().eq('id', me.id), [])
-      if (res.ok) set({ me: null, appointments: [], notifications: [] })
-      return res.ok ? ok(undefined) : res
-    },
-
-    // Ссылка t.me/<бот>?start=<код>; код одноразовый и действует 15 минут
-    createTelegramLink: async () => {
-      const bot = get().settings.telegramBotUsername
-      if (!bot) return fail('Telegram-бот барбершопа ещё не подключён')
-      const res = await mutate(async () => supabase.rpc('create_telegram_link'), [])
-      return res.ok ? ok(`https://t.me/${bot}?start=${res.value as string}`) : res
-    },
-
-    unlinkTelegram: async () => {
-      const res = await mutate(async () => supabase.rpc('unlink_telegram'), [])
-      if (res.ok) await get().reloadMe()
-      return res.ok ? ok(undefined) : res
-    },
-
-    reloadMe: async () => {
-      const me = get().me
-      if (!me) return
-      const { data, error } = await supabase.from('profiles').select('*').eq('id', me.id).single<ProfileRow>()
-      if (error) console.warn('[data] профиль не обновлён', error.message)
-      else set({ me: toUser(data) })
-    },
-
     hasOwner: async () => {
       const { data, error } = await supabase.rpc('has_owner')
       return error ? fail(errorText(error)) : ok(Boolean(data))
@@ -413,6 +418,110 @@ export const useDb = create<DbState & DbActions>()((set, get) => {
         await Promise.all([loadCatalog(), loadPrivate()])
       }
       return ok(Boolean(res.value))
+    },
+
+    clientRestore: async () => {
+      const token = readToken()
+      if (!token) {
+        set({ client: null, clientReady: true })
+        return
+      }
+      const { data, error } = await supabase.rpc('client_me', { p_token: token })
+      if (error) {
+        // Сессия устарела или удалена — просто забываем её
+        writeToken(null)
+        set({ client: null, clientReady: true, appointments: [] })
+        return
+      }
+      set({ client: data as ClientInfo, clientReady: true })
+      await loadClientAppointments().catch((e) => console.warn('[client] записи не загрузились', e))
+    },
+
+    clientLogin: async (name, phone) => {
+      const { data, error } = await supabase.rpc('client_login', { p_phone: phone, p_name: name })
+      if (error) return fail(errorText(error))
+      const res = data as { token: string; client: ClientInfo }
+      writeToken(res.token)
+      set({ client: res.client, clientReady: true })
+      await loadClientAppointments().catch((e) => console.warn('[client] записи не загрузились', e))
+      return ok(res.client)
+    },
+
+    clientLogout: async () => {
+      const token = readToken()
+      writeToken(null)
+      set({ client: null, appointments: [] })
+      if (token) {
+        const { error } = await supabase.rpc('client_logout', { p_token: token })
+        if (error) console.warn('[client] сессия не удалена на сервере', error.message)
+      }
+    },
+
+    clientBook: async (input) => {
+      const res = await mutate(
+        async () =>
+          supabase.rpc('client_book', {
+            p_token: readToken() ?? '',
+            p_request_id: input.requestId,
+            p_master_id: input.masterId,
+            p_service_ids: input.serviceIds,
+            p_starts_at: input.startsAt,
+            p_note: input.note ?? '',
+          }),
+        ['private', 'busy'],
+      )
+      if (!res.ok) return res
+      const id = (res.value as { id: string }).id
+      const appt = get().appointments.find((a) => a.id === id)
+      return appt ? ok(appt) : fail('Запись создана, но не загрузилась. Обновите страницу')
+    },
+
+    clientCancel: async (id, reason) => {
+      const res = await mutate(
+        async () => supabase.rpc('client_cancel', { p_token: readToken() ?? '', p_id: id, p_reason: reason ?? null }),
+        ['private', 'busy'],
+      )
+      return res.ok ? ok(undefined) : res
+    },
+
+    clientReschedule: async (id, startsAt) => {
+      const res = await mutate(
+        async () => supabase.rpc('client_reschedule', { p_token: readToken() ?? '', p_id: id, p_starts_at: startsAt }),
+        ['private', 'busy'],
+      )
+      return res.ok ? ok(undefined) : res
+    },
+
+    clientSetReminders: async (on) => {
+      const { data, error } = await supabase.rpc('client_set_reminders', { p_token: readToken() ?? '', p_on: on })
+      if (error) return fail(errorText(error))
+      set({ client: data as ClientInfo })
+      return ok(undefined)
+    },
+
+    // Ссылка t.me/<бот>?start=<код>; код одноразовый и действует 15 минут
+    clientTelegramLink: async () => {
+      const bot = get().settings.telegramBotUsername
+      if (!bot) return fail('Telegram-бот барбершопа ещё не подключён')
+      const { data, error } = await supabase.rpc('client_telegram_link', { p_token: readToken() ?? '' })
+      if (error) return fail(errorText(error))
+      return ok(`https://t.me/${bot}?start=${data as string}`)
+    },
+
+    clientUnlinkTelegram: async () => {
+      const { data, error } = await supabase.rpc('client_unlink_telegram', { p_token: readToken() ?? '' })
+      if (error) return fail(errorText(error))
+      set({ client: data as ClientInfo })
+      return ok(undefined)
+    },
+
+    clientAddReview: async ({ rating, text, appointmentId }) => {
+      const res = await mutate(
+        async () =>
+          supabase.rpc('client_add_review', { p_token: readToken() ?? '', p_appointment_id: appointmentId, p_rating: rating, p_text: text }),
+        ['private'],
+      )
+      return res.ok ? ok(undefined) : res
     },
 
     createAppointment: async (input) => {
@@ -569,14 +678,6 @@ export const useDb = create<DbState & DbActions>()((set, get) => {
 
     removeTimeOff: async (id) => {
       const res = await mutate(() => supabase.from('time_off').delete().eq('id', id), ['catalog'])
-      return res.ok ? ok(undefined) : res
-    },
-
-    addSiteReview: async ({ rating, text, appointmentId }) => {
-      const res = await mutate(
-        async () => supabase.rpc('add_site_review', { p_appointment_id: appointmentId, p_rating: rating, p_text: text }),
-        ['catalog'],
-      )
       return res.ok ? ok(undefined) : res
     },
 

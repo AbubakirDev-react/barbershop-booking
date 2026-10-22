@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useDb } from '@/data/store'
-import { useCurrentUser } from '@/data/hooks'
 import { usePageMeta } from '@/shared/seo'
 import { formatDate } from '@/domain/format'
 import { ReviewItem } from '@/features/reviews/ReviewsBlock'
@@ -36,26 +35,22 @@ export default function ReviewsPage() {
 }
 
 function ReviewForm() {
-  const user = useCurrentUser()
+  const client = useDb((s) => s.client)
   const appointments = useDb((s) => s.appointments)
-  const reviews = useDb((s) => s.reviews)
-  const addSiteReview = useDb((s) => s.addSiteReview)
+  const clientAddReview = useDb((s) => s.clientAddReview)
   const toast = useToast()
   const [rating, setRating] = useState(0)
   const [text, setText] = useState('')
-  const [apptId, setApptId] = useState('')
+  // Из «Моих записей» можно прийти сразу с нужной записью
+  const [apptId, setApptId] = useState(() => new URLSearchParams(window.location.search).get('appointment') ?? '')
   const [error, setError] = useState('')
   const [sent, setSent] = useState(false)
 
   // Отзыв доступен только по своей завершённой записи без отзыва
   const eligible = useMemo(
     () =>
-      user
-        ? appointments.filter(
-            (a) => a.clientUserId === user.id && a.status === 'completed' && !reviews.some((r) => r.appointmentId === a.id),
-          )
-        : [],
-    [appointments, reviews, user],
+      client ? appointments.filter((a) => a.status === 'completed' && !a.hasReview) : [],
+    [appointments, client],
   )
 
   return (
@@ -63,9 +58,9 @@ function ReviewForm() {
       <h2 id="review-form" style={{ fontSize: 'var(--fs-lg)', marginBottom: 'var(--sp-3)' }}>
         Оставить отзыв
       </h2>
-      {!user ? (
+      {!client ? (
         <p className="muted">
-          Отзыв могут оставить клиенты после визита. <Link to="/login?next=/reviews">Войдите в аккаунт</Link>, чтобы продолжить.
+          Отзыв могут оставить клиенты после визита. Откройте <Link to="/me">«Мои записи»</Link> по имени и телефону, чтобы продолжить.
         </p>
       ) : sent ? (
         <div className="alert alert--ok">Спасибо! Отзыв отправлен на проверку и появится после модерации.</div>
@@ -78,7 +73,7 @@ function ReviewForm() {
             e.preventDefault()
             setError('')
             const id = apptId || eligible[0]!.id
-            const res = await addSiteReview({ rating, text, appointmentId: id })
+            const res = await clientAddReview({ rating, text, appointmentId: id })
             if (!res.ok) return setError(res.error)
             setSent(true)
             toast('Отзыв отправлен на проверку')

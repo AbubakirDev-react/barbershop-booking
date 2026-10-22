@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, ScrollRestoration, useLocation } from 'react-router-dom'
 import { useDb } from '@/data/store'
-import { isStaffRole, useCurrentUser, useShopName } from '@/data/hooks'
+import { useShopName } from '@/data/hooks'
 import { Icon } from '@/shared/ui'
-import { ThemeToggle } from './ThemeToggle'
 import './public-layout.css'
 
 const NAV = [
@@ -15,7 +14,7 @@ const NAV = [
 
 export function PublicLayout() {
   const shopName = useShopName()
-  const user = useCurrentUser()
+  const client = useDb((s) => s.client)
   const location = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
   const onBookPage = location.pathname.startsWith('/book')
@@ -34,9 +33,9 @@ export function PublicLayout() {
     }
   }, [menuOpen])
 
-  const accountLink = user ? '/profile' : '/login'
-  const accountLabel = user ? 'Профиль' : 'Войти'
-  const isStaff = isStaffRole(user?.role)
+  // Без регистрации: «Мои записи» — это записи, сделанные с этого устройства
+  const accountLink = '/me'
+  const accountLabel = client ? client.name : 'Мои записи'
 
   return (
     <div className="site">
@@ -57,13 +56,6 @@ export function PublicLayout() {
           </nav>
 
           <div className="site-header__actions">
-            <ThemeToggle />
-            {isStaff && (
-              <Link to="/dashboard" className="btn btn--ghost site-header__account" aria-label="Панель управления">
-                <Icon name="grid" />
-                <span>Панель</span>
-              </Link>
-            )}
             <Link to={accountLink} className="btn btn--ghost site-header__account" aria-label={accountLabel}>
               <Icon name="user" />
               <span>{accountLabel}</span>
@@ -95,7 +87,6 @@ export function PublicLayout() {
                 {n.label}
               </NavLink>
             ))}
-            {isStaff && <NavLink to="/dashboard" className="mobile-menu__link">Панель управления</NavLink>}
             <NavLink to={accountLink} className="mobile-menu__link">{accountLabel}</NavLink>
           </nav>
         </div>

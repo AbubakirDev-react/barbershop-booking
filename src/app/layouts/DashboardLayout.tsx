@@ -1,36 +1,44 @@
 import { useState } from 'react'
-import { Link, NavLink, Outlet, ScrollRestoration, useLocation, useNavigate } from 'react-router-dom'
-import { useClerk } from '@clerk/clerk-react'
+import { Link, NavLink, Outlet, ScrollRestoration, useLocation } from 'react-router-dom'
 import { useDb } from '@/data/store'
-import { useCurrentUser, useShopName } from '@/data/hooks'
+import { useShopName } from '@/data/hooks'
+import { supabase } from '@/data/supabase'
 import type { Role } from '@/domain/types'
 import { Icon, type IconName } from '@/shared/ui'
-import { ThemeToggle } from './ThemeToggle'
 import './dashboard-layout.css'
 
-const NAV: { to: string; label: string; icon: IconName; roles: Role[]; end?: boolean }[] = [
-  { to: '/dashboard', label: 'Сегодня', icon: 'home', roles: ['barber', 'owner'], end: true },
-  { to: '/dashboard/calendar', label: 'Календарь', icon: 'calendar', roles: ['barber', 'owner'] },
-  { to: '/dashboard/appointments', label: 'Записи', icon: 'list', roles: ['barber', 'owner'] },
-  { to: '/dashboard/clients', label: 'Клиенты', icon: 'users', roles: ['barber', 'owner'] },
-  { to: '/dashboard/notifications', label: 'Уведомления', icon: 'bell', roles: ['barber', 'owner'] },
-  { to: '/dashboard/services', label: 'Услуги', icon: 'scissors', roles: ['owner'] },
-  { to: '/dashboard/categories', label: 'Категории', icon: 'tag', roles: ['owner'] },
-  { to: '/dashboard/masters', label: 'Мастера', icon: 'user', roles: ['owner'] },
-  { to: '/dashboard/reviews', label: 'Отзывы', icon: 'star', roles: ['owner'] },
-  { to: '/dashboard/analytics', label: 'Аналитика', icon: 'chart', roles: ['owner'] },
-  { to: '/dashboard/users', label: 'Пользователи', icon: 'users', roles: ['owner'] },
-  { to: '/dashboard/settings', label: 'Настройки', icon: 'settings', roles: ['barber', 'owner'] },
-]
+type Kind = 'owner' | 'master'
 
-const ROLE_LABEL: Record<Role, string> = { client: 'Клиент', barber: 'Барбер', owner: 'Владелец' }
+const NAV: Record<Kind, { to: string; label: string; icon: IconName; end?: boolean }[]> = {
+  master: [
+    { to: '/', label: 'Сегодня', icon: 'home', end: true },
+    { to: '/calendar', label: 'Календарь', icon: 'calendar' },
+    { to: '/appointments', label: 'Записи', icon: 'list' },
+    { to: '/clients', label: 'Клиенты', icon: 'users' },
+    { to: '/notifications', label: 'Уведомления', icon: 'bell' },
+  ],
+  owner: [
+    { to: '/', label: 'Сегодня', icon: 'home', end: true },
+    { to: '/calendar', label: 'Календарь', icon: 'calendar' },
+    { to: '/appointments', label: 'Записи', icon: 'list' },
+    { to: '/clients', label: 'Клиенты', icon: 'users' },
+    { to: '/notifications', label: 'Уведомления', icon: 'bell' },
+    { to: '/services', label: 'Услуги', icon: 'scissors' },
+    { to: '/categories', label: 'Категории', icon: 'tag' },
+    { to: '/masters', label: 'Мастера', icon: 'user' },
+    { to: '/reviews', label: 'Отзывы', icon: 'star' },
+    { to: '/analytics', label: 'Аналитика', icon: 'chart' },
+    { to: '/users', label: 'Сотрудники', icon: 'users' },
+    { to: '/settings', label: 'Настройки', icon: 'settings' },
+  ],
+}
 
-export default function DashboardLayout() {
-  const user = useCurrentUser()!
+const ROLE_LABEL: Record<Role, string> = { client: 'Без роли', barber: 'Мастер', owner: 'Владелец' }
+
+export default function DashboardLayout({ kind }: { kind: Kind }) {
+  const user = useDb((s) => s.me)!
   const shopName = useShopName()
-  const { signOut } = useClerk()
   const unread = useDb((s) => s.notifications.filter((n) => n.scope === 'staff' && !n.read).length)
-  const navigate = useNavigate()
   const location = useLocation()
   const [open, setOpen] = useState(false)
   const [prevPath, setPrevPath] = useState(location.pathname)
@@ -39,40 +47,34 @@ export default function DashboardLayout() {
     setOpen(false)
   }
 
-  const items = NAV.filter((n) => n.roles.includes(user.role))
-
   return (
     <div className="dash">
       <a className="skip-link" href="#dash-main">Перейти к содержимому</a>
-      <aside className={`dash__side${open ? ' is-open' : ''}`} aria-label="Меню панели">
+      <aside className={`dash__side${open ? ' is-open' : ''}`} aria-label="Меню">
         <div className="dash__brand">
-          <Link to="/" className="brand">
-            <span className="brand__mark pole" aria-hidden />
-            <span className="brand__name">{shopName}</span>
-          </Link>
+          <span className="dash__logo" aria-hidden>{shopName.slice(0, 1)}</span>
+          <span style={{ minWidth: 0 }}>
+            <span className="dash__shop">{shopName}</span>
+            <span className="dash__kind">{kind === 'owner' ? 'Кабинет владельца' : 'Кабинет мастера'}</span>
+          </span>
         </div>
         <nav className="dash__nav">
-          {items.map((n) => (
+          {NAV[kind].map((n) => (
             <NavLink key={n.to} to={n.to} end={n.end} className="dash__link">
               <Icon name={n.icon} />
               <span>{n.label}</span>
-              {n.to === '/dashboard/notifications' && unread > 0 && (
+              {n.to === '/notifications' && unread > 0 && (
                 <span className="dash__count" aria-label={`${unread} непрочитанных`}>{unread}</span>
               )}
             </NavLink>
           ))}
         </nav>
         <div className="dash__user">
-          <Link to="/profile" className="dash__profile" title="Мой профиль: записи, Telegram, настройки">
-            <p className="dash__user-name">{user.name} {user.surname}</p>
-            <p className="muted" style={{ fontSize: 'var(--fs-xs)' }}>{ROLE_LABEL[user.role]} · Мой профиль</p>
-          </Link>
-          <button
-            className="btn btn--ghost btn--icon btn--sm"
-            aria-label="Выйти"
-            title="Выйти"
-            onClick={() => void signOut(() => navigate('/'))}
-          >
+          <div style={{ minWidth: 0 }}>
+            <p className="dash__user-name">{[user.name, user.surname].filter(Boolean).join(' ') || user.email}</p>
+            <p className="muted" style={{ fontSize: 'var(--fs-xs)' }}>{ROLE_LABEL[user.role]}</p>
+          </div>
+          <button className="btn btn--ghost btn--icon btn--sm" aria-label="Выйти" title="Выйти" onClick={() => void supabase.auth.signOut()}>
             <Icon name="logout" />
           </button>
         </div>
@@ -81,24 +83,17 @@ export default function DashboardLayout() {
 
       <div className="dash__body">
         <header className="dash__top">
-          <button
-            className="btn btn--ghost btn--icon dash__burger"
-            aria-label="Открыть меню"
-            aria-expanded={open}
-            onClick={() => setOpen(true)}
-          >
+          <button className="btn btn--ghost btn--icon dash__burger" aria-label="Открыть меню" aria-expanded={open} onClick={() => setOpen(true)}>
             <Icon name="menu" size={22} />
           </button>
           <div className="dash__top-actions">
-            <Link to="/dashboard/notifications" className="btn btn--ghost btn--icon" aria-label={`Уведомления${unread ? `: ${unread} новых` : ''}`}>
+            <Link to="/notifications" className="btn btn--ghost btn--icon" aria-label={`Уведомления${unread ? `: ${unread} новых` : ''}`}>
               <Icon name="bell" />
               {unread > 0 && <span className="dash__dot" aria-hidden />}
             </Link>
-            <ThemeToggle />
-            <Link to="/" className="btn btn--ghost btn--sm">На сайт</Link>
           </div>
         </header>
-        <main id="dash-main" className="dash__main">
+        <main id="dash-main" className="dash__main page-enter" key={location.pathname}>
           <Outlet />
         </main>
       </div>

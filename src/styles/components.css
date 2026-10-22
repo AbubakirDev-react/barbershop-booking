@@ -427,3 +427,80 @@
 .dl { display: grid; grid-template-columns: max-content 1fr; gap: var(--sp-2) var(--sp-5); font-size: var(--fs-sm); margin: 0; }
 .dl dt { color: var(--c-muted); }
 .dl dd { margin: 0; font-weight: 500; }
+
+/* =====================================================================
+   Редизайн v2: светлый, мягкий, живой. Переопределяет базовые стили выше.
+   ===================================================================== */
+.btn {
+  border-radius: var(--r-pill);
+  transition: background 0.2s var(--ease), border-color 0.2s var(--ease), transform 0.15s var(--ease-spring), box-shadow 0.2s var(--ease);
+}
+.btn:hover:not(:disabled) { transform: translateY(-1px); }
+.btn:active:not(:disabled) { transform: translateY(0) scale(0.97); }
+.btn--primary {
+  --btn-bg: var(--c-accent);
+  --btn-fg: var(--c-accent-ink);
+  --btn-border: var(--c-accent);
+}
+.btn--primary:hover:not(:disabled) { --btn-bg: var(--c-accent); box-shadow: 0 8px 20px -8px var(--c-accent); }
+.btn--book { box-shadow: 0 10px 24px -10px var(--c-red); }
+.btn--book:hover:not(:disabled) { box-shadow: 0 14px 28px -10px var(--c-red); }
+.btn--ghost:hover:not(:disabled) { transform: none; }
+
+.panel {
+  border: 0;
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+}
+.input,
+.select,
+.textarea {
+  border-radius: var(--r-sm);
+  border-color: transparent;
+  background: var(--c-surface-2);
+  transition: border-color 0.15s var(--ease), box-shadow 0.15s var(--ease), background 0.15s var(--ease);
+}
+.input:hover,
+.select:hover,
+.textarea:hover { border-color: var(--c-line-strong); }
+.input:focus,
+.select:focus,
+.textarea:focus { background: var(--c-surface); border-color: var(--c-accent); box-shadow: 0 0 0 4px var(--c-accent-soft); }
+
+.segmented { border-radius: var(--r-pill); padding: 4px; }
+.segmented button,
+.segmented a { border-radius: var(--r-pill); transition: background 0.2s var(--ease), color 0.2s var(--ease); }
+
+.badge { padding: 3px 10px; }
+.empty { border: 0; background: var(--c-surface); border-radius: var(--r-lg); box-shadow: var(--shadow-card); }
+.modal { border-radius: var(--r-lg) var(--r-lg) 0 0; animation: rise 0.3s var(--ease-out); }
+@media (min-width: 640px) { .modal { border-radius: var(--r-lg); } }
+.modal__head, .modal__foot { border-color: var(--c-line); }
+.toast { border-radius: var(--r-pill); padding-inline: var(--sp-5); }
+.alert { border-left: 0; border-radius: var(--r-sm); }
+.table th { font-weight: 500; }
+.link-btn { color: var(--c-accent); }
+
+/* Кто записывается (после входа по телефону) */
+.book__who {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--c-accent-soft);
+  animation: rise 0.4s var(--ease-out);
+}
+.book__login { padding: var(--sp-4); border-radius: var(--r-md); background: var(--c-surface-2); }
+
+.success__check {
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: var(--c-ok);
+  color: #fff;
+  animation: pop 0.6s var(--ease-spring) both, rise 0.5s var(--ease-out) both;
+  box-shadow: 0 16px 36px -14px var(--c-ok);
+}

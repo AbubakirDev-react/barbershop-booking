@@ -185,3 +185,6 @@
 
 /* Пустое состояние внутри карточки — без второй тени */
 .panel .empty { box-shadow: none; background: var(--c-surface-2); }
+
+/* Фильтры растягиваются ровно, а не прыгают по строкам на планшете */
+.toolbar .field { flex: 1 1 150px; min-width: 140px; }

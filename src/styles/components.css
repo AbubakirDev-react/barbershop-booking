@@ -504,3 +504,47 @@
   animation: pop 0.6s var(--ease-spring) both, rise 0.5s var(--ease-out) both;
   box-shadow: 0 16px 36px -14px var(--c-ok);
 }
+
+/* ===== Единый вид кнопок и списков на всех устройствах =====
+   Сбрасываем системное оформление (особенно Safari на iPhone/iPad). */
+button,
+select,
+input[type='date'],
+input[type='time'] {
+  -webkit-appearance: none;
+  appearance: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Выпадающий список: свой значок-стрелка вместо системного */
+.select {
+  padding-right: 40px;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236a7180' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 16px;
+}
+.input[type='date'],
+.input[type='time'] { min-height: 44px; line-height: 1.2; }
+
+/* Кнопки-ссылки («это не я», «убрать») — маленькие мягкие кнопки, а не подчёркнутый текст */
+.link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 30px;
+  padding: 2px 12px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--c-accent-soft);
+  color: var(--c-accent);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s var(--ease), transform 0.15s var(--ease-spring);
+}
+.link-btn:hover { background: color-mix(in srgb, var(--c-accent-soft) 70%, var(--c-accent) 12%); }
+.link-btn:active { transform: scale(0.96); }
+.link-btn:disabled { opacity: 0.5; cursor: not-allowed; }

@@ -137,3 +137,7 @@
   .site-footer__inner { grid-template-columns: 1fr auto; align-items: start; }
   .site-footer__copy { grid-column: span 2; }
 }
+
+/* Нижняя кнопка записи появляется плавно, когда кнопка первого экрана ушла */
+.book-bar { animation: rise 0.35s var(--ease-out); }
+.site-header__book { animation: rise 0.3s var(--ease-out); }

@@ -18,6 +18,19 @@ export function PublicLayout() {
   const location = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
   const onBookPage = location.pathname.startsWith('/book')
+  // На «Моих записях» своя кнопка записи — общие не дублируем
+  const onMePage = location.pathname.startsWith('/me')
+
+  // Пока на экране кнопка «Записаться» из первого экрана главной, вторую не показываем
+  const [heroCtaInView, setHeroCtaInView] = useState(false)
+  useEffect(() => {
+    const el = document.getElementById('hero-cta')
+    if (!el) return
+    const io = new IntersectionObserver(([e]) => setHeroCtaInView(e!.isIntersecting), { rootMargin: '-64px 0px 0px 0px' })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [location.pathname])
+  const showBookButton = !onBookPage && !onMePage && !(location.pathname === '/' && heroCtaInView)
 
   // Закрываем мобильное меню при переходе на другую страницу
   const [prevPath, setPrevPath] = useState(location.pathname)
@@ -60,7 +73,7 @@ export function PublicLayout() {
               <Icon name="user" />
               <span>{accountLabel}</span>
             </Link>
-            {!onBookPage && (
+            {showBookButton && (
               <Link to="/book" className="btn btn--book site-header__book">
                 Записаться
               </Link>
@@ -98,7 +111,7 @@ export function PublicLayout() {
 
       <SiteFooter />
 
-      {!onBookPage && (
+      {showBookButton && (
         <div className="book-bar">
           <Link to="/book" className="btn btn--book btn--lg btn--block">
             Записаться

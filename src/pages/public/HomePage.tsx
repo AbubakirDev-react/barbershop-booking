@@ -39,7 +39,7 @@ export default function HomePage() {
             <p className="hero__lead reveal" style={{ ['--d' as string]: '350ms' }}>
               {settings.description || 'Выберите мастера, услуги и удобное время — запись за минуту, без регистрации.'}
             </p>
-            <div className="row hero__cta reveal" style={{ ['--d' as string]: '450ms' }}>
+            <div id="hero-cta" className="row hero__cta reveal" style={{ ['--d' as string]: '450ms' }}>
               <Link to="/book" className="btn btn--book btn--lg">Записаться</Link>
               <Link to="/services" className="btn btn--lg">Услуги и цены</Link>
             </div>
@@ -84,7 +84,7 @@ export default function HomePage() {
           </div>
           <div className="masters">
             {masters.slice(0, 3).map((m) => (
-              <MasterCard key={m.id} master={m} />
+              <MasterCard key={m.id} master={m} withBooking={false} />
             ))}
           </div>
         </section>

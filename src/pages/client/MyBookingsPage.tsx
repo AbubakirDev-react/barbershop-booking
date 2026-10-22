@@ -55,7 +55,7 @@ export default function MyBookingsPage() {
       <section className="me__section reveal" style={{ ['--d' as string]: '60ms' }} aria-labelledby="up">
         <div className="spread">
           <h2 id="up">Предстоящие</h2>
-          <Link to="/book" className="btn btn--book btn--sm">Записаться ещё</Link>
+          {upcoming.length > 0 && <Link to="/book" className="btn btn--book btn--sm">Записаться ещё</Link>}
         </div>
         {upcoming.length ? (
           <div className="me__list">

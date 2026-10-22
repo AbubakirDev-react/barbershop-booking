@@ -26,7 +26,7 @@ export default function HomePage() {
   return (
     <>
       <section className="hero">
-        <div className="container hero__inner">
+        <div className={`container hero__inner${settings.heroPhoto ? '' : ' hero__inner--solo'}`}>
           <div className="hero__text">
             {/* Название появляется по словам — единственная «большая» анимация страницы */}
             <h1 className="hero__title" aria-label={shopName}>
@@ -45,14 +45,13 @@ export default function HomePage() {
             </div>
             {settings.address && <p className="hero__address reveal" style={{ ['--d' as string]: '550ms' }}>{settings.address}</p>}
           </div>
-          <div className="hero__visual reveal" style={{ ['--d' as string]: '200ms' }}>
-            {settings.heroPhoto ? (
+          {/* Без фото блок не показываем: пустая заглушка — лишняя информация */}
+          {settings.heroPhoto && (
+            <div className="hero__visual reveal" style={{ ['--d' as string]: '200ms' }}>
               <img src={settings.heroPhoto} alt={`Интерьер: ${shopName}`} className="hero__photo" />
-            ) : (
-              <div className="hero__photo photo-empty">Фото барбершопа появится после загрузки в настройках</div>
-            )}
-            <div className="hero__pole pole" aria-hidden />
-          </div>
+              <div className="hero__pole pole" aria-hidden />
+            </div>
+          )}
         </div>
         {services.length > 0 && <ServiceTicker services={services} />}
       </section>

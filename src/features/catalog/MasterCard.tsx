@@ -4,7 +4,6 @@ import { useDb } from '@/data/store'
 import { findNextSlot } from '@/domain/slots'
 import { formatDateTime, formatRub, WEEK_ORDER, WEEKDAYS_SHORT } from '@/domain/format'
 import type { Master } from '@/domain/types'
-import { initials } from '@/domain/format'
 import './catalog.css'
 
 export function workDaysText(m: Master): string {
@@ -42,13 +41,7 @@ export function MasterCard({ master, withBooking = true }: { master: Master; wit
 
   return (
     <article className="master">
-      {master.photo ? (
-        <img className="master__photo" src={master.photo} alt={master.name} loading="lazy" />
-      ) : (
-        <div className="master__photo photo-empty" aria-hidden>
-          {initials(master.name)}
-        </div>
-      )}
+      {master.photo && <img className="master__photo" src={master.photo} alt={master.name} loading="lazy" />}
       <div className="stack" style={{ gap: 'var(--sp-1)' }}>
         <h3 className="master__name">{master.name}</h3>
         {master.specialization && <p className="master__spec">{master.specialization}</p>}

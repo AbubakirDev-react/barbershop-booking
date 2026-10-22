@@ -88,3 +88,6 @@
 .hours td { padding: 6px 0; border-bottom: 1px solid var(--c-line); }
 .hours td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
 .hours tr.today td { font-weight: 700; }
+/* Карточка мастера: фото (если есть) во всю ширину сверху, без фото — только текст */
+.master { padding: var(--sp-5); border-radius: var(--r-lg); background: var(--c-surface); box-shadow: var(--shadow-card); }
+.master__photo { margin: calc(var(--sp-5) * -1) calc(var(--sp-5) * -1) 0; width: calc(100% + var(--sp-5) * 2); border-radius: var(--r-lg) var(--r-lg) 0 0; }

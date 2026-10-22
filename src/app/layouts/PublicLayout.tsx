@@ -1,27 +1,34 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, ScrollRestoration, useLocation } from 'react-router-dom'
 import { useDb } from '@/data/store'
-import { useShopName } from '@/data/hooks'
-import { Icon } from '@/shared/ui'
+import { usePublicMasters, usePublicServices, useShopName, useSortedCategories } from '@/data/hooks'
+import { formatRub } from '@/domain/format'
+import { Icon, type IconName } from '@/shared/ui'
 import './public-layout.css'
 
 const NAV = [
-  { to: '/services', label: 'Услуги' },
   { to: '/masters', label: 'Мастера' },
   { to: '/reviews', label: 'Отзывы' },
   { to: '/about', label: 'Контакты' },
+]
+
+/** Нижняя панель вкладок на телефоне вместо меню-бургера */
+const TABS: { to: string; label: string; icon: IconName; end?: boolean; book?: boolean }[] = [
+  { to: '/', label: 'Главная', icon: 'home', end: true },
+  { to: '/services', label: 'Услуги', icon: 'scissors' },
+  { to: '/book', label: 'Записаться', icon: 'calendar', book: true },
+  { to: '/masters', label: 'Мастера', icon: 'users' },
+  { to: '/me', label: 'Мои записи', icon: 'user' },
 ]
 
 export function PublicLayout() {
   const shopName = useShopName()
   const client = useDb((s) => s.client)
   const location = useLocation()
-  const [menuOpen, setMenuOpen] = useState(false)
   const onBookPage = location.pathname.startsWith('/book')
-  // На «Моих записях» своя кнопка записи — общие не дублируем
   const onMePage = location.pathname.startsWith('/me')
 
-  // Пока на экране кнопка «Записаться» из первого экрана главной, вторую не показываем
+  // Пока на экране кнопка «Записаться» из первого экрана главной, в шапке её не дублируем
   const [heroCtaInView, setHeroCtaInView] = useState(false)
   useEffect(() => {
     const el = document.getElementById('hero-cta')
@@ -30,25 +37,7 @@ export function PublicLayout() {
     io.observe(el)
     return () => io.disconnect()
   }, [location.pathname])
-  const showBookButton = !onBookPage && !onMePage && !(location.pathname === '/' && heroCtaInView)
-
-  // Закрываем мобильное меню при переходе на другую страницу
-  const [prevPath, setPrevPath] = useState(location.pathname)
-  if (prevPath !== location.pathname) {
-    setPrevPath(location.pathname)
-    setMenuOpen(false)
-  }
-
-  useEffect(() => {
-    document.body.style.overflow = menuOpen ? 'hidden' : ''
-    return () => {
-      document.body.style.overflow = ''
-    }
-  }, [menuOpen])
-
-  // Без регистрации: «Мои записи» — это записи, сделанные с этого устройства
-  const accountLink = '/me'
-  const accountLabel = client ? client.name : 'Мои записи'
+  const showHeaderBook = !onBookPage && !onMePage && !(location.pathname === '/' && heroCtaInView)
 
   return (
     <div className="site">
@@ -61,6 +50,7 @@ export function PublicLayout() {
           </Link>
 
           <nav className="site-nav" aria-label="Основная навигация">
+            <MegaMenu key={location.pathname} />
             {NAV.map((n) => (
               <NavLink key={n.to} to={n.to} className="site-nav__link">
                 {n.label}
@@ -69,41 +59,18 @@ export function PublicLayout() {
           </nav>
 
           <div className="site-header__actions">
-            <Link to={accountLink} className="btn btn--ghost site-header__account" aria-label={accountLabel}>
+            <Link to="/me" className="btn btn--ghost site-header__account" aria-label={client ? client.name : 'Мои записи'}>
               <Icon name="user" />
-              <span>{accountLabel}</span>
+              <span>{client ? client.name : 'Мои записи'}</span>
             </Link>
-            {showBookButton && (
+            {showHeaderBook && (
               <Link to="/book" className="btn btn--book site-header__book">
                 Записаться
               </Link>
             )}
-            <button
-              className="btn btn--ghost btn--icon site-header__burger"
-              aria-label={menuOpen ? 'Закрыть меню' : 'Открыть меню'}
-              aria-expanded={menuOpen}
-              aria-controls="mobile-menu"
-              onClick={() => setMenuOpen((v) => !v)}
-            >
-              <Icon name={menuOpen ? 'close' : 'menu'} size={22} />
-            </button>
           </div>
         </div>
       </header>
-
-      {menuOpen && (
-        <div className="mobile-menu" id="mobile-menu">
-          <nav className="container" aria-label="Мобильная навигация">
-            <NavLink to="/" end className="mobile-menu__link">Главная</NavLink>
-            {NAV.map((n) => (
-              <NavLink key={n.to} to={n.to} className="mobile-menu__link">
-                {n.label}
-              </NavLink>
-            ))}
-            <NavLink to={accountLink} className="mobile-menu__link">{accountLabel}</NavLink>
-          </nav>
-        </div>
-      )}
 
       <main id="main" className="site-main">
         <Outlet />
@@ -111,14 +78,112 @@ export function PublicLayout() {
 
       <SiteFooter />
 
-      {showBookButton && (
-        <div className="book-bar">
-          <Link to="/book" className="btn btn--book btn--lg btn--block">
-            Записаться
-          </Link>
-        </div>
+      {/* На странице записи внизу своя панель выбора — вкладки бы её перекрыли */}
+      {!onBookPage && (
+        <nav className="tabbar" aria-label="Разделы">
+          {TABS.map((t) => (
+            <NavLink key={t.to} to={t.to} end={t.end} className={`tabbar__item${t.book ? ' tabbar__item--book' : ''}`}>
+              <span className="tabbar__icon"><Icon name={t.icon} size={t.book ? 22 : 20} /></span>
+              <span className="tabbar__label">{t.label}</span>
+            </NavLink>
+          ))}
+        </nav>
       )}
       <ScrollRestoration />
+    </div>
+  )
+}
+
+/**
+ * Мега-меню «Услуги»: по наведению или клику раскрывается панель с разделами
+ * прайса, мастерами и контактами. Закрывается по Escape, уходу курсора и переходу.
+ */
+function MegaMenu() {
+  const services = usePublicServices()
+  const categories = useSortedCategories()
+  const masters = usePublicMasters()
+  const settings = useDb((s) => s.settings)
+  const [open, setOpen] = useState(false)
+  const closeTimer = useRef<number | undefined>(undefined)
+
+  const groups = useMemo(
+    () =>
+      categories
+        .map((c) => ({ id: c.id, name: c.name, items: services.filter((s) => s.categoryId === c.id) }))
+        .filter((g) => g.items.length),
+    [categories, services],
+  )
+
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [open])
+
+  const show = () => {
+    window.clearTimeout(closeTimer.current)
+    setOpen(true)
+  }
+  // Небольшая задержка, чтобы панель не закрывалась, пока курсор идёт к ней
+  const hide = () => {
+    closeTimer.current = window.setTimeout(() => setOpen(false), 160)
+  }
+
+  return (
+    <div className="mega" onMouseEnter={show} onMouseLeave={hide}>
+      <button
+        type="button"
+        className={`site-nav__link mega__trigger${open ? ' is-open' : ''}`}
+        aria-expanded={open}
+        aria-controls="mega-panel"
+        onClick={() => setOpen((v) => !v)}
+      >
+        Услуги <Icon name="chevronDown" size={14} />
+      </button>
+      {open && (
+        <div className="mega__panel" id="mega-panel" role="region" aria-label="Услуги и мастера">
+          <div className="mega__cols">
+            {groups.map((g) => (
+              <div key={g.id} className="mega__col">
+                <p className="mega__title">{g.name}</p>
+                <ul>
+                  {g.items.slice(0, 5).map((s) => (
+                    <li key={s.id}>
+                      <Link to={`/book?service=${s.id}`} className="mega__link">
+                        <span>{s.name}</span>
+                        <b>{formatRub(s.price)}</b>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+            {masters.length > 0 && (
+              <div className="mega__col">
+                <p className="mega__title">Мастера</p>
+                <ul>
+                  {masters.map((m) => (
+                    <li key={m.id}>
+                      <Link to={`/book?master=${m.id}`} className="mega__link">
+                        <span>{m.name}</span>
+                        {m.specialization && <small>{m.specialization}</small>}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+          <div className="mega__aside">
+            <p className="mega__title">Онлайн-запись</p>
+            <p className="muted">Без регистрации, за минуту.</p>
+            <Link to="/book" className="btn btn--book btn--block">Записаться</Link>
+            <Link to="/services" className="mega__all">Все услуги и цены →</Link>
+            {settings.address && <p className="muted" style={{ fontSize: 'var(--fs-xs)' }}>{settings.address}</p>}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -129,7 +194,6 @@ function SiteFooter() {
   const year = new Date().getFullYear()
   return (
     <footer className="site-footer">
-      <div className="pole pole--thin" aria-hidden />
       <div className="container site-footer__inner">
         <div className="stack" style={{ gap: 'var(--sp-2)' }}>
           <p className="brand__name">{shopName}</p>
@@ -140,13 +204,6 @@ function SiteFooter() {
             </a>
           )}
         </div>
-        <nav className="site-footer__nav" aria-label="Ссылки в подвале">
-          <Link to="/services">Услуги</Link>
-          <Link to="/masters">Мастера</Link>
-          <Link to="/reviews">Отзывы</Link>
-          <Link to="/about">Контакты</Link>
-          <Link to="/book">Онлайн-запись</Link>
-        </nav>
         <p className="muted site-footer__copy">© {year} {shopName}. Оплата услуг — в барбершопе.</p>
       </div>
     </footer>

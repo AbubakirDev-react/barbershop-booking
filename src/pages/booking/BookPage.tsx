@@ -284,7 +284,7 @@ function MasterStep({
               disabled={!offered.length}
               onClick={() => onSelect(m.id)}
             >
-              <Avatar name={m.name} photo={m.photo} size={56} />
+              {m.photo && <Avatar name={m.name} photo={m.photo} size={56} />}
               <span className="pick__body">
                 <span className="pick__title">{m.name}</span>
                 {m.specialization && <span className="pick__meta" style={{ color: 'var(--c-steel)' }}>{m.specialization}</span>}

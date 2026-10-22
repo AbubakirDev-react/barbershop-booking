@@ -127,3 +127,7 @@
   box-shadow: var(--shadow-card);
 }
 .hero__text { min-width: 0; }
+@media (min-width: 900px) {
+  .hero__inner--solo { grid-template-columns: 1fr; padding-block: var(--sp-8) var(--sp-7); }
+}
+.hero__inner--solo .hero__title { max-width: 16ch; }

@@ -6,7 +6,7 @@
 .site-main {
   flex: 1;
   /* Место под закреплённую кнопку записи на мобильных */
-  padding-bottom: 88px;
+  padding-bottom: 112px;
 }
 @media (min-width: 900px) {
   .site-main { padding-bottom: 0; }
@@ -80,42 +80,9 @@
   .site-nav { display: flex; }
   .site-header__account span { display: inline; }
   .site-header__book { display: inline-flex; margin-left: var(--sp-2); }
-  .site-header__burger { display: none; }
 }
 
-.mobile-menu {
-  position: fixed;
-  inset: var(--header-h) 0 0 0;
-  z-index: 29;
-  background: var(--c-bg);
-  padding-top: var(--sp-4);
-  animation: fade 0.15s var(--ease);
-}
-.mobile-menu nav { display: flex; flex-direction: column; }
-.mobile-menu__link {
-  padding: var(--sp-4) 0;
-  border-bottom: 1px solid var(--c-line);
-  font-family: var(--font-display);
-  font-size: var(--fs-xl);
-  text-decoration: none;
-}
-.mobile-menu__link.active { color: var(--c-steel); }
 
-/* Закреплённая кнопка записи: только на мобильных, учитывает safe-area */
-.book-bar {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 20;
-  padding: var(--sp-3) var(--sp-4) calc(var(--sp-3) + env(safe-area-inset-bottom));
-  background: color-mix(in srgb, var(--c-bg) 94%, transparent);
-  backdrop-filter: blur(10px);
-  border-top: 1px solid var(--c-line);
-}
-@media (min-width: 900px) {
-  .book-bar { display: none; }
-}
 
 .site-footer { margin-top: var(--sp-8); }
 .site-footer__inner {
@@ -138,6 +105,112 @@
   .site-footer__copy { grid-column: span 2; }
 }
 
-/* Нижняя кнопка записи появляется плавно, когда кнопка первого экрана ушла */
-.book-bar { animation: rise 0.35s var(--ease-out); }
 .site-header__book { animation: rise 0.3s var(--ease-out); }
+
+/* ===== Мега-меню (компьютер) ===== */
+.site-header__inner { position: relative; }
+.mega__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+}
+.mega__trigger svg { transition: transform 0.2s var(--ease); }
+.mega__trigger.is-open { color: var(--c-ink); background: var(--c-surface-2); }
+.mega__trigger.is-open svg { transform: rotate(180deg); }
+.mega__panel {
+  position: absolute;
+  left: var(--sp-4);
+  right: var(--sp-4);
+  top: calc(100% - 6px);
+  z-index: 40;
+  display: grid;
+  grid-template-columns: 1fr 240px;
+  gap: var(--sp-6);
+  padding: var(--sp-6);
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  box-shadow: var(--shadow-pop);
+  animation: rise 0.25s var(--ease-out);
+}
+.mega__cols { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: var(--sp-5); }
+.mega__title { font-family: var(--font-display); font-size: var(--fs-sm); margin-bottom: var(--sp-2); }
+.mega__col ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.mega__link {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--sp-3);
+  padding: 6px var(--sp-2);
+  margin-inline: calc(var(--sp-2) * -1);
+  border-radius: var(--r-sm);
+  text-decoration: none;
+  font-size: var(--fs-sm);
+  color: var(--c-ink-2);
+  transition: background 0.15s var(--ease), color 0.15s var(--ease);
+}
+.mega__link:hover { background: var(--c-accent-soft); color: var(--c-ink); }
+.mega__link b { font-weight: 600; white-space: nowrap; }
+.mega__link small { color: var(--c-muted); font-size: var(--fs-xs); white-space: nowrap; }
+.mega__aside {
+  display: grid;
+  align-content: start;
+  gap: var(--sp-3);
+  padding: var(--sp-5);
+  border-radius: var(--r-md);
+  background: var(--c-accent-soft);
+}
+.mega__all { font-size: var(--fs-sm); font-weight: 600; color: var(--c-accent); text-decoration: none; }
+
+/* ===== Панель вкладок (телефон) ===== */
+.tabbar { display: none; }
+@media (max-width: 899px) {
+  .site-header__actions { display: none; }
+  .tabbar {
+    position: fixed;
+    left: var(--sp-3);
+    right: var(--sp-3);
+    bottom: calc(var(--sp-3) + env(safe-area-inset-bottom));
+    z-index: 30;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    align-items: end;
+    padding: 6px;
+    border-radius: 22px;
+    background: color-mix(in srgb, var(--c-surface) 90%, transparent);
+    backdrop-filter: blur(16px);
+    box-shadow: var(--shadow-pop);
+  }
+  .tabbar__item {
+    display: grid;
+    justify-items: center;
+    gap: 2px;
+    padding: 6px 2px;
+    border-radius: 16px;
+    text-decoration: none;
+    color: var(--c-muted);
+    font-size: 10.5px;
+    font-weight: 600;
+    transition: color 0.2s var(--ease), background 0.2s var(--ease);
+  }
+  .tabbar__item.active { color: var(--c-accent); background: var(--c-accent-soft); }
+  .tabbar__item.active .tabbar__icon { animation: pop 0.35s var(--ease-spring); }
+  .tabbar__label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  /* «Записаться» — главная вкладка: красная и чуть приподнятая */
+  .tabbar__item--book .tabbar__icon {
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    margin-top: -22px;
+    border-radius: 50%;
+    background: var(--c-red);
+    color: #fff;
+    box-shadow: 0 10px 22px -8px var(--c-red);
+  }
+  .tabbar__item--book { color: var(--c-ink); }
+  .tabbar__item--book.active { background: none; color: var(--c-red); }
+}

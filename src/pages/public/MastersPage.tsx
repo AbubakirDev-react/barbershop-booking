@@ -10,7 +10,6 @@ export default function MastersPage() {
     <div className="container">
       <header className="page-head">
         <h1>Мастера</h1>
-        <p>У каждого мастера своё расписание. Ближайшее свободное время рассчитывается по его графику и записям.</p>
       </header>
       {masters.length ? (
         <div className="masters">

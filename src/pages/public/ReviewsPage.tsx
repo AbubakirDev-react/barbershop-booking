@@ -1,10 +1,9 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { useDb } from '@/data/store'
 import { usePageMeta } from '@/shared/seo'
 import { formatDate } from '@/domain/format'
 import { ReviewItem } from '@/features/reviews/ReviewsBlock'
-import { Button, EmptyState, Field, Select, StarsInput, Textarea, useToast } from '@/shared/ui'
+import { Button, Field, Select, StarsInput, Textarea, useToast } from '@/shared/ui'
 import '@/features/reviews/reviews.css'
 
 export default function ReviewsPage() {
@@ -26,7 +25,7 @@ export default function ReviewsPage() {
             ))}
           </div>
         ) : (
-          <EmptyState title="Отзывов пока нет" text="Здесь появятся отзывы клиентов после первых визитов." />
+          <p className="muted">Отзывов пока нет.</p>
         )}
         <ReviewForm />
       </div>
@@ -53,19 +52,16 @@ function ReviewForm() {
     [appointments, client],
   )
 
+  // Форму показываем, только когда клиенту есть что оценить (или отзыв только что отправлен)
+  if (!client || (!eligible.length && !sent)) return null
+
   return (
     <section className="panel" aria-labelledby="review-form" style={{ maxWidth: 640 }}>
       <h2 id="review-form" style={{ fontSize: 'var(--fs-lg)', marginBottom: 'var(--sp-3)' }}>
         Оставить отзыв
       </h2>
-      {!client ? (
-        <p className="muted">
-          Отзыв могут оставить клиенты после визита. Откройте <Link to="/me">«Мои записи»</Link> по имени и телефону, чтобы продолжить.
-        </p>
-      ) : sent ? (
+      {sent ? (
         <div className="alert alert--ok">Спасибо! Отзыв отправлен на проверку и появится после модерации.</div>
-      ) : !eligible.length ? (
-        <p className="muted">Оставить отзыв можно после завершённой записи. Сейчас таких записей без отзыва нет.</p>
       ) : (
         <form
           className="stack"

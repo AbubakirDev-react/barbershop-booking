@@ -26,15 +26,6 @@ export default function AboutPage() {
           <h2 id="about-hours" style={{ fontSize: 'var(--fs-lg)' }}>Часы работы</h2>
           <ShopHours />
         </section>
-        <section aria-labelledby="about-rules" className="stack">
-          <h2 id="about-rules" style={{ fontSize: 'var(--fs-lg)' }}>Правила записи</h2>
-          <ul className="muted" style={{ margin: 0, paddingLeft: '1.2em', display: 'grid', gap: 6 }}>
-            <li>Оплата — в барбершопе, онлайн платить не нужно.</li>
-            <li>Отменить запись онлайн можно не позднее чем за {settings.cancelBeforeHours} ч до начала.</li>
-            <li>Перенести — не позднее чем за {settings.rescheduleBeforeHours} ч.</li>
-            <li>Записаться можно не раньше чем за {Math.round(settings.minLeadMinutes / 60 * 10) / 10} ч и не дальше {settings.horizonDays} дн. вперёд.</li>
-          </ul>
-        </section>
       </div>
     </div>
   )

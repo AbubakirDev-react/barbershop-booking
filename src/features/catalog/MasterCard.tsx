@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useDb } from '@/data/store'
 import { findNextSlot } from '@/domain/slots'
-import { formatDateTime, formatRub, WEEK_ORDER, WEEKDAYS_SHORT } from '@/domain/format'
+import { formatRub, formatShortDateTime, WEEK_ORDER, WEEKDAYS_SHORT } from '@/domain/format'
 import type { Master } from '@/domain/types'
 import './catalog.css'
 
@@ -48,14 +48,9 @@ export function MasterCard({ master, withBooking = true }: { master: Master; wit
       </div>
       {master.bio && <p className="master__bio">{master.bio}</p>}
       <div className="master__facts">
-        <span className="muted">{workDaysText(master)}</span>
-        {minPrice !== null && <span>Услуги от {formatRub(minPrice)}</span>}
-        <span>
-          {next ? (
-            <>Ближайшее время: <strong>{formatDateTime(next.startsAt)}</strong></>
-          ) : (
-            <span className="muted">Свободного времени в ближайшие {settings.horizonDays} дн. нет</span>
-          )}
+        {minPrice !== null && <span>от {formatRub(minPrice)}</span>}
+        <span className={next ? undefined : 'muted'}>
+          {next ? <>Свободно: <strong>{formatShortDateTime(next.startsAt)}</strong></> : 'Нет свободного времени'}
         </span>
       </div>
       {withBooking && offered.length > 0 && (

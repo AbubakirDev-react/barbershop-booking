@@ -5,9 +5,8 @@ import { usePublicMasters, usePublicServices, useSortedCategories } from '@/data
 import { usePageMeta } from '@/shared/seo'
 import { calcTotals, MAX_SERVICES_PER_APPOINTMENT, toItem } from '@/domain/pricing'
 import { findNextSlot } from '@/domain/slots'
-import { formatDateTime, formatDuration, formatRub, formatTime, formatWeekdayDate, pluralize } from '@/domain/format'
+import { formatDateTime, formatDuration, formatRub, formatShortDateTime, pluralize } from '@/domain/format'
 import type { Appointment, Master } from '@/domain/types'
-import { workDaysText } from '@/features/catalog/MasterCard'
 import { SlotPicker } from '@/features/booking/SlotPicker'
 import { Avatar, Button, EmptyState, Field, Icon, Input, StatusBadge } from '@/shared/ui'
 import { ClientLoginForm } from '@/features/client/ClientLoginForm'
@@ -106,7 +105,7 @@ export default function BookPage() {
               <li key={label} className="steps__item" data-state={i < step ? 'done' : i === step ? 'current' : 'todo'}>
                 <button type="button" disabled={i > maxStep} onClick={() => update({ step: i })} aria-current={i === step ? 'step' : undefined}>
                   <span className="steps__num">{i + 1}</span>
-                  {label}
+                  <span className="steps__label">{label}</span>
                 </button>
               </li>
             ))}
@@ -188,7 +187,7 @@ export default function BookPage() {
           )}
         </div>
 
-        <aside className="book__summary panel" aria-label="Ваша запись">
+        <aside className={`book__summary panel${step < 3 ? ' book__summary--desktop' : ''}`} aria-label="Ваша запись">
           <h2 style={{ fontSize: 'var(--fs-md)', marginBottom: 'var(--sp-4)' }}>Ваша запись</h2>
           <Summary master={master} items={chosen.map(toItem)} startsAt={draft.startsAt} />
         </aside>
@@ -261,7 +260,6 @@ function MasterStep({
   return (
     <section className="book__step">
       <h2>Выберите мастера</h2>
-      <p className="muted">Ближайшее время рассчитано по расписанию мастера и уже занятым записям.</p>
       {list.length === 0 && (
         <div className="alert alert--warn" style={{ marginBottom: 'var(--sp-4)' }}>
           Выбранную услугу сейчас не выполняет ни один мастер.
@@ -295,12 +293,11 @@ function MasterStep({
                 <span className="pick__title">{m.name}</span>
                 {m.specialization && <span className="pick__meta" style={{ color: 'var(--c-steel)' }}>{m.specialization}</span>}
                 {m.bio && <span className="pick__meta">{m.bio}</span>}
-                <span className="pick__meta">{workDaysText(m)}</span>
                 <span className="pick__meta">
                   {offered.length === 0
                     ? 'Нет доступных услуг'
                     : next
-                      ? `Ближайшее: ${formatWeekdayDate(next.startsAt)}, ${formatTime(next.startsAt)}`
+                      ? `Свободно: ${formatShortDateTime(next.startsAt)}`
                       : `Нет свободного времени в ближайшие ${settings.horizonDays} дн.`}
                 </span>
               </span>
@@ -330,9 +327,7 @@ function ServicesStep({ master, selected, onChange }: { master: Master; selected
   return (
     <section className="book__step">
       <h2>Выберите услуги</h2>
-      <p className="muted">
-        До {MAX_SERVICES_PER_APPOINTMENT} услуг в одной записи. Выбрано: {selected.length} из {MAX_SERVICES_PER_APPOINTMENT}.
-      </p>
+      <p className="muted">До {MAX_SERVICES_PER_APPOINTMENT} услуг</p>
       {groups.map((g) => (
         <div key={g.id} style={{ marginBottom: 'var(--sp-5)' }}>
           <h3 style={{ fontSize: 'var(--fs-sm)', color: 'var(--c-muted)', marginBottom: 'var(--sp-2)' }}>{g.name}</h3>

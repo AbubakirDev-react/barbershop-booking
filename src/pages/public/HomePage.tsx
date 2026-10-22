@@ -79,7 +79,7 @@ export default function HomePage() {
         <section className="container section" aria-labelledby="home-masters">
           <div className="section__head">
             <h2 id="home-masters">Мастера</h2>
-            <Link to="/masters" className="section__more">Подробнее о мастерах</Link>
+            <Link to="/masters" className="section__more">Все мастера</Link>
           </div>
           <div className="masters">
             {masters.slice(0, 3).map((m) => (
@@ -88,21 +88,6 @@ export default function HomePage() {
           </div>
         </section>
       )}
-
-      <section className="container section home-facts" aria-label="Как проходит запись">
-        <div>
-          <h3>Запись онлайн в любое время</h3>
-          <p className="muted">Видно реальное свободное время мастера, без звонков и ожидания ответа.</p>
-        </div>
-        <div>
-          <h3>Цена известна заранее</h3>
-          <p className="muted">Стоимость и длительность каждой услуги показаны до подтверждения записи.</p>
-        </div>
-        <div>
-          <h3>Оплата на месте</h3>
-          <p className="muted">Онлайн платить не нужно — расчёт в барбершопе после визита.</p>
-        </div>
-      </section>
 
       <ReviewsBlock limit={3} />
 

@@ -40,7 +40,7 @@ export function PublicLayout() {
   const showHeaderBook = !onBookPage && !onMePage && !(location.pathname === '/' && heroCtaInView)
 
   return (
-    <div className="site">
+    <div className={`site${onBookPage ? ' site--no-tabs' : ''}`}>
       <a className="skip-link" href="#main">Перейти к содержимому</a>
       <header className="site-header">
         <div className="container site-header__inner">
@@ -196,22 +196,17 @@ function MegaMenu() {
 }
 
 function SiteFooter() {
-  const settings = useDb((s) => s.settings)
+  const phone = useDb((s) => s.settings.phone)
   const shopName = useShopName()
-  const year = new Date().getFullYear()
   return (
     <footer className="site-footer">
       <div className="container site-footer__inner">
-        <div className="stack" style={{ gap: 'var(--sp-2)' }}>
-          <p className="brand__name">{shopName}</p>
-          {settings.address && <p className="muted">{settings.address}</p>}
-          {settings.phone && (
-            <a href={`tel:${settings.phone.replace(/[^+\d]/g, '')}`} className="site-footer__phone">
-              {settings.phone}
-            </a>
-          )}
-        </div>
-        <p className="muted site-footer__copy">© {year} {shopName}. Оплата услуг — в барбершопе.</p>
+        <span className="muted">© {new Date().getFullYear()} {shopName}</span>
+        {phone && (
+          <a href={`tel:${phone.replace(/[^+\d]/g, '')}`} className="site-footer__phone">
+            {phone}
+          </a>
+        )}
       </div>
     </footer>
   )

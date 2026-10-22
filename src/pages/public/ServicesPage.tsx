@@ -26,7 +26,6 @@ export default function ServicesPage() {
     <div className="container">
       <header className="page-head">
         <h1>Услуги и цены</h1>
-        <p>В одну запись можно добавить до трёх услуг. Оплата — в барбершопе.</p>
       </header>
 
       {groups.length === 0 ? (

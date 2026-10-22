@@ -238,3 +238,10 @@
   /* На телефоне панель над краем экрана с учётом «чёлки» снизу */
   .book-bar-sticky { bottom: calc(var(--sp-3) + env(safe-area-inset-bottom)); }
 }
+
+/* На телефоне выбор показывает нижняя панель — блок «Ваша запись» нужен только при подтверждении */
+@media (max-width: 959px) {
+  .book__summary--desktop { display: none; }
+  .steps__item:not([data-state='current']) .steps__label { display: none; }
+  .steps__item { min-width: 0; }
+}

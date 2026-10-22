@@ -27,6 +27,9 @@ export const formatTime = (iso: string | Date) => format(inShopTz(iso), 'HH:mm')
 export const formatDateTime = (iso: string | Date) =>
   format(inShopTz(iso), 'd MMMM yyyy, HH:mm', { locale: ru })
 
+/** «пт, 23 окт, 10:00» — для карточек, где важна краткость */
+export const formatShortDateTime = (iso: string | Date) => format(inShopTz(iso), 'EEEEEE, d MMM, HH:mm', { locale: ru })
+
 export const WEEKDAYS_FULL = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота']
 export const WEEKDAYS_SHORT = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб']
 /** Порядок для российской недели: с понедельника */

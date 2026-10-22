@@ -164,3 +164,53 @@
   padding-block: var(--sp-7);
 }
 .success__num { font-family: var(--font-display); font-size: var(--fs-3xl); line-height: 1; }
+
+/* ===== Редизайн v2 ===== */
+.steps__item {
+  border-top-width: 4px;
+  border-radius: 2px;
+  transition: border-color 0.3s var(--ease), color 0.3s var(--ease);
+}
+.steps__item[data-state='done'] { border-color: var(--c-accent); }
+.steps__item[data-state='current'] { border-color: var(--c-red); }
+.book__step { animation: reveal-up 0.45s var(--ease-out) both; }
+.book__summary { border-radius: var(--r-lg); }
+.book__nav { border-top: 0; }
+
+.pick {
+  border: 2px solid transparent;
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-card);
+  transition: border-color 0.2s var(--ease), transform 0.2s var(--ease-spring), box-shadow 0.2s var(--ease);
+}
+.pick:hover:not(:disabled) { border-color: transparent; transform: translateY(-2px); box-shadow: var(--shadow-pop); }
+.pick[aria-pressed='true'],
+.pick[aria-checked='true'] { border-color: var(--c-accent); box-shadow: 0 0 0 4px var(--c-accent-soft); }
+.pick__check { border-radius: 8px; transition: background 0.2s var(--ease), transform 0.3s var(--ease-spring); }
+.pick[aria-checked='true'] .pick__check { background: var(--c-accent); border-color: var(--c-accent); transform: scale(1.1); }
+.pick__side { color: var(--c-ink); }
+
+.date-strip { gap: var(--sp-2); padding: 2px 2px var(--sp-2); }
+.date-strip__day {
+  width: 64px;
+  border: 0;
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-card);
+  transition: transform 0.2s var(--ease-spring), background 0.2s var(--ease), color 0.2s var(--ease);
+}
+.date-strip__day:hover:not(:disabled) { transform: translateY(-2px); }
+.date-strip__day[aria-selected='true'] { background: var(--c-accent); color: var(--c-accent-ink); }
+.date-strip__day:disabled { box-shadow: none; }
+
+.slot {
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--c-surface);
+  box-shadow: var(--shadow-card);
+  transition: transform 0.2s var(--ease-spring), background 0.2s var(--ease), color 0.2s var(--ease);
+}
+.slot:hover:not(:disabled) { transform: translateY(-2px); }
+.slot[aria-checked='true'] { background: var(--c-accent); color: var(--c-accent-ink); animation: pop 0.35s var(--ease-spring); }
+.slot:disabled { box-shadow: none; background: transparent; border: 1px dashed var(--c-line-strong); }
+
+.success { justify-items: start; }

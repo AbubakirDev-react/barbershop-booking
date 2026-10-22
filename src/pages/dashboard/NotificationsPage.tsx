@@ -50,9 +50,6 @@ export default function NotificationsPage() {
           ))}
         </ul>
       )}
-      <div className="alert">
-        Внешние уведомления (email, Telegram) заработают после подключения сервиса отправки. Сейчас события видны здесь.
-      </div>
       {modal}
     </>
   )

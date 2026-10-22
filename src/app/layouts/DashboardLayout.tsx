@@ -33,6 +33,9 @@ const NAV: Record<Kind, { to: string; label: string; icon: IconName; end?: boole
   ],
 }
 
+/** Нижние вкладки на планшете и телефоне: у мастера все разделы, у владельца — основные + «Ещё» */
+const TAB_COUNT: Record<Kind, number> = { master: 5, owner: 4 }
+
 const ROLE_LABEL: Record<Role, string> = { client: 'Без роли', barber: 'Мастер', owner: 'Владелец' }
 
 export default function DashboardLayout({ kind }: { kind: Kind }) {
@@ -83,20 +86,42 @@ export default function DashboardLayout({ kind }: { kind: Kind }) {
 
       <div className="dash__body">
         <header className="dash__top">
-          <button className="btn btn--ghost btn--icon dash__burger" aria-label="Открыть меню" aria-expanded={open} onClick={() => setOpen(true)}>
-            <Icon name="menu" size={22} />
-          </button>
+          <span className="dash__top-shop">
+            <span className="dash__logo dash__logo--sm" aria-hidden>{shopName.slice(0, 1)}</span>
+            <span className="dash__shop">{shopName}</span>
+          </span>
           <div className="dash__top-actions">
             <Link to="/notifications" className="btn btn--ghost btn--icon" aria-label={`Уведомления${unread ? `: ${unread} новых` : ''}`}>
               <Icon name="bell" />
               {unread > 0 && <span className="dash__dot" aria-hidden />}
             </Link>
+            <button className="btn btn--ghost btn--icon dash__top-logout" aria-label="Выйти" title="Выйти" onClick={() => void supabase.auth.signOut()}>
+              <Icon name="logout" />
+            </button>
           </div>
         </header>
         <main id="dash-main" className="dash__main page-enter" key={location.pathname}>
           <Outlet />
         </main>
       </div>
+
+      <nav className="dash-tabs" aria-label="Разделы">
+        {NAV[kind].slice(0, TAB_COUNT[kind]).map((n) => (
+          <NavLink key={n.to} to={n.to} end={n.end} className="dash-tabs__item">
+            <span className="dash-tabs__icon">
+              <Icon name={n.icon} size={22} />
+              {n.to === '/notifications' && unread > 0 && <span className="dash__dot" aria-hidden />}
+            </span>
+            <span>{n.label}</span>
+          </NavLink>
+        ))}
+        {kind === 'owner' && (
+          <button type="button" className={`dash-tabs__item${open ? ' active' : ''}`} aria-expanded={open} onClick={() => setOpen(true)}>
+            <span className="dash-tabs__icon"><Icon name="menu" size={22} /></span>
+            <span>Ещё</span>
+          </button>
+        )}
+      </nav>
       <ScrollRestoration />
     </div>
   )

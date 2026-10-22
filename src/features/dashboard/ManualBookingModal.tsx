@@ -112,24 +112,30 @@ export function ManualBookingModal({ onClose }: { onClose: () => void }) {
             {offered.length === 0 ? (
               <p className="muted">У мастера нет назначенных услуг.</p>
             ) : (
-              <div className="stack" style={{ gap: 'var(--sp-2)' }}>
+              // Крупные карточки вместо галочек — удобно нажимать пальцем на планшете
+              <div className="svc-grid" role="group" aria-label="Услуги">
                 {offered.map((s) => {
                   const on = serviceIds.includes(s.id)
+                  const blocked = !on && serviceIds.length >= MAX_SERVICES_PER_APPOINTMENT
                   return (
-                    <label key={s.id} className="check">
-                      <input
-                        type="checkbox"
-                        checked={on}
-                        disabled={!on && serviceIds.length >= MAX_SERVICES_PER_APPOINTMENT}
-                        onChange={() => {
-                          setServiceIds(on ? serviceIds.filter((x) => x !== s.id) : [...serviceIds, s.id])
-                          setStartsAt(null)
-                        }}
-                      />
-                      <span>
-                        {s.name} <span className="muted">· {formatDuration(s.durationMinutes)} · {formatRub(s.price)}</span>
+                    <button
+                      key={s.id}
+                      type="button"
+                      role="checkbox"
+                      aria-checked={on}
+                      disabled={blocked}
+                      className="pick svc-grid__item"
+                      onClick={() => {
+                        setServiceIds(on ? serviceIds.filter((x) => x !== s.id) : [...serviceIds, s.id])
+                        setStartsAt(null)
+                      }}
+                    >
+                      <span className="pick__body">
+                        <span className="pick__title">{s.name}</span>
+                        <span className="pick__meta">{formatDuration(s.durationMinutes)}</span>
                       </span>
-                    </label>
+                      <span className="pick__side">{formatRub(s.price)}</span>
+                    </button>
                   )
                 })}
               </div>

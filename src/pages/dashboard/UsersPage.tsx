@@ -11,7 +11,7 @@ import { Button, EmptyState, Field, Input, Modal, Select, useToast } from '@/sha
 const ROLE_LABEL: Record<Role, string> = { client: 'Клиент', barber: 'Барбер', owner: 'Владелец' }
 
 export default function UsersPage() {
-  usePageMeta('Пользователи', '', { noindex: true })
+  usePageMeta('Сотрудники', '', { noindex: true })
   const me = useCurrentUser()!
   const users = useDb((s) => s.users)
   const appointments = useDb((s) => s.appointments)
@@ -48,7 +48,7 @@ export default function UsersPage() {
     <>
       <div className="dash-head">
         <div>
-          <h1>Пользователи</h1>
+          <h1>Сотрудники</h1>
           <p>Роли и доступ к панели. Изменения проверяются при каждом действии.</p>
         </div>
       </div>

@@ -129,3 +129,59 @@
 .dash__top { border-bottom: 0; background: color-mix(in srgb, var(--c-bg) 85%, transparent); }
 .stat { border: 0; border-radius: var(--r-lg); box-shadow: var(--shadow-card); }
 .cal { border: 0; border-radius: var(--r-lg); box-shadow: var(--shadow-card); }
+
+/* ===== Планшет и телефон: нижние вкладки вместо меню-бургера ===== */
+.dash__top-shop { display: none; align-items: center; gap: var(--sp-2); min-width: 0; }
+.dash__logo--sm { width: 30px; height: 30px; border-radius: 9px; font-size: var(--fs-sm); }
+.dash-tabs { display: none; }
+.dash__top-logout { display: none; }
+
+@media (max-width: 1023px) {
+  .dash__top-shop { display: inline-flex; }
+  .dash__top-logout { display: inline-flex; }
+  .dash__main { padding-bottom: calc(110px + env(safe-area-inset-bottom)); }
+  .dash-tabs {
+    position: fixed;
+    left: 50%;
+    bottom: calc(var(--sp-3) + env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    z-index: 35;
+    display: flex;
+    gap: 4px;
+    width: min(640px, calc(100% - var(--sp-5)));
+    padding: 6px;
+    border-radius: 22px;
+    background: color-mix(in srgb, var(--c-surface) 92%, transparent);
+    backdrop-filter: blur(16px);
+    box-shadow: var(--shadow-pop);
+  }
+  .dash-tabs__item {
+    flex: 1;
+    display: grid;
+    justify-items: center;
+    gap: 2px;
+    min-height: 56px;
+    padding: 6px 2px;
+    border: 0;
+    border-radius: 16px;
+    background: none;
+    color: var(--c-muted);
+    font: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.2s var(--ease), color 0.2s var(--ease);
+  }
+  .dash-tabs__item.active { background: var(--c-accent-soft); color: var(--c-accent); }
+  .dash-tabs__icon { position: relative; display: grid; place-items: center; }
+  .dash-tabs__icon .dash__dot { top: -2px; right: -4px; }
+  /* Боковое меню остаётся выдвижным для «Ещё» у владельца */
+  .dash__side { bottom: 0; }
+}
+@media (min-width: 640px) and (max-width: 1023px) {
+  .dash-tabs__item { font-size: 12.5px; }
+}
+
+/* Пустое состояние внутри карточки — без второй тени */
+.panel .empty { box-shadow: none; background: var(--c-surface-2); }

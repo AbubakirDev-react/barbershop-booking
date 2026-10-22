@@ -214,3 +214,7 @@
   .tabbar__item--book { color: var(--c-ink); }
   .tabbar__item--book.active { background: none; color: var(--c-red); }
 }
+
+/* Выход из записи: справа в шапке, виден и на телефоне */
+.book-exit { margin-left: auto; }
+@media (min-width: 900px) { .book-exit { margin-left: 0; } }

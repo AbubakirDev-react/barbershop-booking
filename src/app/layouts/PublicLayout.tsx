@@ -58,6 +58,13 @@ export function PublicLayout() {
             ))}
           </nav>
 
+          {/* В записи нет вкладок — даём явный выход, чтобы клиент не «застрял» */}
+          {onBookPage && (
+            <Link to="/" className="btn btn--ghost btn--sm book-exit" aria-label="Закрыть запись и вернуться на главную">
+              <Icon name="close" size={16} /> Закрыть
+            </Link>
+          )}
+
           <div className="site-header__actions">
             <Link to="/me" className="btn btn--ghost site-header__account" aria-label={client ? client.name : 'Мои записи'}>
               <Icon name="user" />

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useDb } from '@/data/store'
 import { usePublicMasters, usePublicServices, useSortedCategories } from '@/data/hooks'
 import { usePageMeta } from '@/shared/seo'
@@ -64,6 +64,7 @@ export default function BookPage() {
     return saved ?? newDraft()
   })
   const [created, setCreated] = useState<Appointment | null>(null)
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (!created) saveDraft(draft)
@@ -161,7 +162,12 @@ export default function BookPage() {
           {step < 3 && (
             // Закреплённая панель: выбор и «Далее» всегда под рукой, даже на длинном списке услуг
             <div className="book-bar-sticky" role="region" aria-label="Выбор и переход дальше">
-              <Button variant="ghost" icon disabled={step === 0} onClick={() => update({ step: step - 1 })} aria-label="Назад">
+              <Button
+                variant="ghost"
+                icon
+                onClick={() => (step === 0 ? navigate('/') : update({ step: step - 1 }))}
+                aria-label={step === 0 ? 'Выйти из записи' : 'Назад'}
+              >
                 <Icon name="chevronLeft" />
               </Button>
               <div className="book-bar-sticky__info" aria-live="polite">

@@ -33,6 +33,20 @@ export default function StaffLoginPage({ kind }: { kind: StaffKind }) {
 
   if (me) return <Navigate to="/" replace />
 
+  // Письмо со ссылкой; по ней сотрудник попадает в «Мой аккаунт» и задаёт новый пароль
+  const forgot = async () => {
+    setError('')
+    setInfo('')
+    if (!/^\S+@\S+\.\S+$/.test(email.trim())) return setError('Введите email, на который зарегистрирован аккаунт')
+    setBusy(true)
+    const { error: err } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: window.location.href.replace(/login\/?(\?.*)?$/, 'account?recovery=1'),
+    })
+    setBusy(false)
+    if (err) return setError(authError(err.message))
+    setInfo('Если такой аккаунт есть, мы отправили письмо со ссылкой для смены пароля.')
+  }
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
@@ -45,6 +59,10 @@ export default function StaffLoginPage({ kind }: { kind: StaffKind }) {
       if (name.trim().length < 2) {
         setBusy(false)
         return setError('Укажите имя')
+      }
+      if (password.length < 8) {
+        setBusy(false)
+        return setError('Пароль — не короче 8 символов')
       }
       const { data, error: err } = await supabase.auth.signUp({
         email: email.trim(),
@@ -70,7 +88,7 @@ export default function StaffLoginPage({ kind }: { kind: StaffKind }) {
           <Field label="Имя">{(p) => <Input {...p} value={name} autoComplete="name" onChange={(e) => setName(e.target.value)} />}</Field>
         )}
         <Field label="Email">{(p) => <Input {...p} type="email" value={email} autoComplete="email" onChange={(e) => setEmail(e.target.value)} />}</Field>
-        <Field label="Пароль" hint={mode === 'up' ? 'Не короче 6 символов' : undefined}>
+        <Field label="Пароль" hint={mode === 'up' ? 'Не короче 8 символов' : undefined}>
           {(p) => (
             <Input {...p} type="password" value={password} autoComplete={mode === 'in' ? 'current-password' : 'new-password'} onChange={(e) => setPassword(e.target.value)} />
           )}
@@ -80,10 +98,14 @@ export default function StaffLoginPage({ kind }: { kind: StaffKind }) {
         <Button type="submit" variant="primary" size="lg" block loading={busy}>
           {mode === 'in' ? 'Войти' : 'Создать аккаунт'}
         </Button>
-        {mode === 'up' && (
+        {mode === 'up' ? (
           <p className="muted" style={{ fontSize: 'var(--fs-xs)' }}>
-            После регистрации владелец выдаст вам доступ в разделе «Пользователи».
+            После регистрации владелец выдаст вам доступ в разделе «Сотрудники».
           </p>
+        ) : (
+          <button type="button" className="link-btn" style={{ justifySelf: 'start' }} disabled={busy} onClick={() => void forgot()}>
+            Забыли пароль?
+          </button>
         )}
       </form>
     </main>

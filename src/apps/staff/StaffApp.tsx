@@ -19,6 +19,7 @@ const AnalyticsPage = lazy(() => import('@/pages/dashboard/AnalyticsPage'))
 const ReviewsAdminPage = lazy(() => import('@/pages/dashboard/ReviewsAdminPage'))
 const SettingsPage = lazy(() => import('@/pages/dashboard/SettingsPage'))
 const UsersPage = lazy(() => import('@/pages/dashboard/UsersPage'))
+const AccountPage = lazy(() => import('./AccountPage'))
 
 const page = (node: ReactNode) => <Suspense fallback={<div className="page-loading" aria-busy="true" />}>{node}</Suspense>
 
@@ -29,6 +30,7 @@ const common = [
   { path: 'appointments', element: page(<AppointmentsPage />) },
   { path: 'clients', element: page(<ClientsPage />) },
   { path: 'notifications', element: page(<NotificationsPage />) },
+  { path: 'account', element: page(<AccountPage />) },
 ]
 const ownerOnly = [
   { path: 'services', element: page(<ServicesAdminPage />) },
@@ -78,9 +80,11 @@ export function StaffApp({ kind }: { kind: StaffKind }) {
       // Обновление токена не меняет пользователя — профиль не перечитываем
       if (event === 'TOKEN_REFRESHED') return
       sync(session?.user ?? null)
+      // Вход по ссылке «Забыли пароль?» — сразу на смену пароля
+      if (event === 'PASSWORD_RECOVERY') void routers[kind]?.navigate('/account?recovery=1')
     })
     return () => data.subscription.unsubscribe()
-  }, [setIdentity])
+  }, [setIdentity, kind])
 
   routers[kind] ??= makeRouter(kind)
   return <RouterProvider router={routers[kind]!} />

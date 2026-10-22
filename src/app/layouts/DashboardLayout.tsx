@@ -73,10 +73,10 @@ export default function DashboardLayout({ kind }: { kind: Kind }) {
           ))}
         </nav>
         <div className="dash__user">
-          <div style={{ minWidth: 0 }}>
+          <Link to="/account" className="dash__profile" title="Мой аккаунт: смена пароля">
             <p className="dash__user-name">{[user.name, user.surname].filter(Boolean).join(' ') || user.email}</p>
-            <p className="muted" style={{ fontSize: 'var(--fs-xs)' }}>{ROLE_LABEL[user.role]}</p>
-          </div>
+            <p className="muted" style={{ fontSize: 'var(--fs-xs)' }}>{ROLE_LABEL[user.role]} · аккаунт</p>
+          </Link>
           <button className="btn btn--ghost btn--icon btn--sm" aria-label="Выйти" title="Выйти" onClick={() => void supabase.auth.signOut()}>
             <Icon name="logout" />
           </button>
@@ -94,6 +94,9 @@ export default function DashboardLayout({ kind }: { kind: Kind }) {
             <Link to="/notifications" className="btn btn--ghost btn--icon" aria-label={`Уведомления${unread ? `: ${unread} новых` : ''}`}>
               <Icon name="bell" />
               {unread > 0 && <span className="dash__dot" aria-hidden />}
+            </Link>
+            <Link to="/account" className="btn btn--ghost btn--icon dash__top-logout" aria-label="Мой аккаунт" title="Мой аккаунт">
+              <Icon name="user" />
             </Link>
             <button className="btn btn--ghost btn--icon dash__top-logout" aria-label="Выйти" title="Выйти" onClick={() => void supabase.auth.signOut()}>
               <Icon name="logout" />

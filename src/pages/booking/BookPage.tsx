@@ -5,7 +5,7 @@ import { usePublicMasters, usePublicServices, useSortedCategories } from '@/data
 import { usePageMeta } from '@/shared/seo'
 import { calcTotals, MAX_SERVICES_PER_APPOINTMENT, toItem } from '@/domain/pricing'
 import { findNextSlot } from '@/domain/slots'
-import { formatDateTime, formatDuration, formatRub, formatTime, formatWeekdayDate } from '@/domain/format'
+import { formatDateTime, formatDuration, formatRub, formatTime, formatWeekdayDate, pluralize } from '@/domain/format'
 import type { Appointment, Master } from '@/domain/types'
 import { workDaysText } from '@/features/catalog/MasterCard'
 import { SlotPicker } from '@/features/booking/SlotPicker'
@@ -159,10 +159,22 @@ export default function BookPage() {
           )}
 
           {step < 3 && (
-            <div className="book__nav">
-              <Button variant="ghost" disabled={step === 0} onClick={() => update({ step: step - 1 })}>
-                <Icon name="chevronLeft" /> Назад
+            // Закреплённая панель: выбор и «Далее» всегда под рукой, даже на длинном списке услуг
+            <div className="book-bar-sticky" role="region" aria-label="Выбор и переход дальше">
+              <Button variant="ghost" icon disabled={step === 0} onClick={() => update({ step: step - 1 })} aria-label="Назад">
+                <Icon name="chevronLeft" />
               </Button>
+              <div className="book-bar-sticky__info" aria-live="polite">
+                <span className="book-bar-sticky__line">
+                  {master ? master.name : 'Мастер не выбран'}
+                  {chosen.length > 0 && ` · ${chosen.length} ${pluralize(chosen.length, 'услуга', 'услуги', 'услуг')}`}
+                </span>
+                <span className="book-bar-sticky__sub">
+                  {chosen.length > 0
+                    ? `${formatDuration(totals.durationMinutes)} · ${formatRub(totals.total)}`
+                    : step === 0 ? 'Выберите мастера' : 'Выберите услуги'}
+                </span>
+              </div>
               <Button variant="primary" disabled={!canGo[step + 1]} onClick={() => update({ step: step + 1 })}>
                 Далее <Icon name="chevronRight" />
               </Button>

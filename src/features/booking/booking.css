@@ -214,3 +214,27 @@
 .slot:disabled { box-shadow: none; background: transparent; border: 1px dashed var(--c-line-strong); }
 
 .success { justify-items: start; }
+
+/* Закреплённая панель выбора на шагах 1–3 */
+.book-bar-sticky {
+  position: sticky;
+  bottom: var(--sp-3);
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-6);
+  padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-3);
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--c-surface) 88%, transparent);
+  backdrop-filter: blur(14px);
+  box-shadow: var(--shadow-pop);
+  animation: rise 0.4s var(--ease-out);
+}
+.book-bar-sticky__info { flex: 1; min-width: 0; display: grid; line-height: 1.25; }
+.book-bar-sticky__line { font-weight: 600; font-size: var(--fs-sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.book-bar-sticky__sub { font-size: var(--fs-xs); color: var(--c-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 899px) {
+  /* На телефоне панель над краем экрана с учётом «чёлки» снизу */
+  .book-bar-sticky { bottom: calc(var(--sp-3) + env(safe-area-inset-bottom)); }
+}

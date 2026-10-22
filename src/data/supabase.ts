@@ -1,26 +1,20 @@
 import { createClient } from '@supabase/supabase-js'
+import { APP } from '@/app/appKind'
 
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
 const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined
 
 if (!url || !key) {
-  throw new Error('Не заданы VITE_SUPABASE_URL и VITE_SUPABASE_PUBLISHABLE_KEY в .env')
-}
-
-interface ClerkLike {
-  session?: { getToken: () => Promise<string | null> } | null
+  throw new Error('Не заданы VITE_SUPABASE_URL и VITE_SUPABASE_PUBLISHABLE_KEY')
 }
 
 /**
- * Supabase принимает сессию Clerk (Third-Party Auth): к каждому запросу
- * прикладывается свежий токен Clerk, а RLS читает из него `sub`.
- * Без входа токена нет — запросы идут от роли anon.
+ * Клиенты работают без входа (роль anon + токен сессии в функциях client_*).
+ * Сотрудники входят через Supabase Auth. У сайтов владельца и мастера свой
+ * ключ хранения сессии: все три сайта живут на одном домене GitHub Pages.
  */
 export const supabase = createClient(url, key, {
-  accessToken: async () => {
-    const clerk = (window as unknown as { Clerk?: ClerkLike }).Clerk
-    return (await clerk?.session?.getToken()) ?? null
-  },
+  auth: { storageKey: `bb-${APP}-auth`, persistSession: APP !== 'client', autoRefreshToken: APP !== 'client' },
 })
 
 export const PHOTO_BUCKET = 'photos'

@@ -1,8 +1,5 @@
-import { StrictMode } from 'react'
+import { StrictMode, Suspense, lazy } from 'react'
 import { createRoot } from 'react-dom/client'
-import { RouterProvider } from 'react-router-dom'
-import { ClerkProvider } from '@clerk/clerk-react'
-import { ruRU } from '@clerk/localizations'
 import '@fontsource/unbounded/cyrillic-500.css'
 import '@fontsource/unbounded/cyrillic-600.css'
 import '@fontsource/unbounded/latin-600.css'
@@ -14,38 +11,36 @@ import '@fontsource/golos-text/latin-600.css'
 import './styles/tokens.css'
 import './styles/base.css'
 import './styles/components.css'
-import { router } from './app/router'
-import { AuthSync } from './app/AuthSync'
+import { APP, BASE } from './app/appKind'
 import { ToastProvider } from './shared/ui'
-import { applyStoredTheme } from './shared/theme'
 import { useDb } from './data/store'
 
-const clerkKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string | undefined
-if (!clerkKey) throw new Error('Не задан VITE_CLERK_PUBLISHABLE_KEY в .env')
+/**
+ * GitHub Pages не знает про маршруты SPA: на прямой ссылке /book он отдаёт
+ * 404.html, а тот переадресует сюда с ?p=/book. Восстанавливаем адрес.
+ */
+const restored = new URLSearchParams(window.location.search).get('p')
+if (restored && restored.startsWith('/')) {
+  window.history.replaceState(null, '', BASE.replace(/\/$/, '') + restored)
+}
 
-applyStoredTheme()
+// В сборке остаётся только одно приложение: значение APP подставляется при сборке
+const App =
+  APP === 'owner'
+    ? lazy(() => import('./apps/staff/StaffApp').then((m) => ({ default: () => <m.StaffApp kind="owner" /> })))
+    : APP === 'master'
+      ? lazy(() => import('./apps/staff/StaffApp').then((m) => ({ default: () => <m.StaffApp kind="master" /> })))
+      : lazy(() => import('./apps/client/ClientApp'))
+
+document.documentElement.dataset.app = APP
 void useDb.getState().loadPublic()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ClerkProvider
-      publishableKey={clerkKey}
-      localization={ruRU}
-      signInUrl="/login"
-      signUpUrl="/register"
-      afterSignOutUrl="/"
-      appearance={{
-        variables: {
-          colorPrimary: '#3f6c9a',
-          fontFamily: "'Golos Text', system-ui, sans-serif",
-          borderRadius: '6px',
-        },
-      }}
-    >
-      <AuthSync />
-      <ToastProvider>
-        <RouterProvider router={router} />
-      </ToastProvider>
-    </ClerkProvider>
+    <ToastProvider>
+      <Suspense fallback={null}>
+        <App />
+      </Suspense>
+    </ToastProvider>
   </StrictMode>,
 )

@@ -106,6 +106,8 @@ export interface Appointment {
   durationMinutes: number
   createdAt: string
   history: StatusEvent[]
+  /** Только на клиентском сайте: оставлен ли отзыв по записи */
+  hasReview?: boolean
   isDemo?: boolean
 }
 

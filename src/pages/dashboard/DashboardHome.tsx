@@ -83,7 +83,7 @@ export default function DashboardHome() {
         <section className="panel panel--flush" aria-labelledby="today-list">
           <div className="panel__head" style={{ padding: 'var(--sp-4) var(--sp-4) 0' }}>
             <h2 id="today-list">Расписание на сегодня</h2>
-            <Link to="/dashboard/calendar" className="section__more">Календарь</Link>
+            <Link to="/calendar" className="section__more">Календарь</Link>
           </div>
           {today.length ? (
             today.map((a) => <AppointmentRow key={a.id} appt={a} onOpen={() => open(a.id)} showClient showDate={false} />)
@@ -194,9 +194,9 @@ function NowLine({
 function SetupChecklist() {
   const s = useDb((st) => st)
   const steps = [
-    { done: !!s.settings.name && !!s.settings.address, label: 'Указать название, адрес и телефон', to: '/dashboard/settings' },
-    { done: s.services.length > 0, label: 'Добавить услуги с ценами', to: '/dashboard/services' },
-    { done: s.masters.length > 0, label: 'Добавить мастеров и их расписание', to: '/dashboard/masters' },
+    { done: !!s.settings.name && !!s.settings.address, label: 'Указать название, адрес и телефон', to: '/settings' },
+    { done: s.services.length > 0, label: 'Добавить услуги с ценами', to: '/services' },
+    { done: s.masters.length > 0, label: 'Добавить мастеров и их расписание', to: '/masters' },
   ]
   return (
     <section className="panel" aria-labelledby="setup" style={{ borderColor: 'var(--c-steel)' }}>

@@ -1,0 +1,20 @@
+.staff-auth {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: var(--sp-5) var(--sp-4);
+  background:
+    radial-gradient(60rem 30rem at 110% -10%, var(--c-accent-soft), transparent 60%),
+    var(--c-bg);
+}
+.staff-auth__card {
+  width: 100%;
+  max-width: 420px;
+  padding: var(--sp-6);
+  background: var(--c-surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+  animation: rise 0.45s var(--ease-out);
+}
+.staff-auth__card h1 { font-size: var(--fs-2xl); }
+.staff-auth__shop { color: var(--c-accent); font-weight: 600; font-size: var(--fs-sm); }

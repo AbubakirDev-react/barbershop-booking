@@ -40,7 +40,6 @@ import type {
   ShopSettings,
   TimeOff,
   User,
-  UserPrefs,
 } from '@/domain/types'
 
 /**
@@ -342,8 +341,6 @@ export const useDb = create<DbState & DbActions>()((set, get) => {
       return fail(errorText(e as Error))
     }
   }
-
-  const requireMe = () => get().me
 
   return {
     status: 'loading',

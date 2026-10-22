@@ -24,11 +24,11 @@ if (restored && restored.startsWith('/')) {
   window.history.replaceState(null, '', BASE.replace(/\/$/, '') + restored)
 }
 
-// В сборке остаётся только одно приложение: значение APP подставляется при сборке
+// import.meta.env.VITE_APP заменяется строкой при сборке, и лишние ветки удаляются
 const App =
-  APP === 'owner'
+  import.meta.env.VITE_APP === 'owner'
     ? lazy(() => import('./apps/staff/StaffApp').then((m) => ({ default: () => <m.StaffApp kind="owner" /> })))
-    : APP === 'master'
+    : import.meta.env.VITE_APP === 'master'
       ? lazy(() => import('./apps/staff/StaffApp').then((m) => ({ default: () => <m.StaffApp kind="master" /> })))
       : lazy(() => import('./apps/client/ClientApp'))
 

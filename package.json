@@ -5,10 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && node scripts/build-pages.mjs",
     "preview": "vite preview",
     "lint": "eslint .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "dev:owner": "node -e \"process.env.VITE_APP='owner';import('vite').then(async v=>{const s=await v.createServer({server:{port:5175}});await s.listen();s.printUrls()})\"",
+    "dev:master": "node -e \"process.env.VITE_APP='master';import('vite').then(async v=>{const s=await v.createServer({server:{port:5176}});await s.listen();s.printUrls()})\""
   },
   "dependencies": {
     "@date-fns/tz": "^1.5.0",

@@ -1,7 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 import { APP } from '@/app/appKind'
 
-const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
+// Адрес может быть относительным (/sb) — тогда запросы идут через прокси на том же домене
+const rawUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined
+const url = rawUrl?.startsWith('/') ? window.location.origin + rawUrl : rawUrl
 const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined
 
 if (!url || !key) {

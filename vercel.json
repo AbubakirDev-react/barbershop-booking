@@ -1,7 +1,11 @@
 {
   "rewrites": [
     {
-      "source": "/((?!assets/|favicon.svg|robots.txt).*)",
+      "source": "/sb/:path*",
+      "destination": "https://ihpqnoobjlcpozusxomd.supabase.co/:path*"
+    },
+    {
+      "source": "/((?!assets/|sb/|favicon.svg|robots.txt).*)",
       "destination": "/index.html"
     }
   ],
@@ -16,6 +20,6 @@
       ]
     }
   ],
-  "buildCommand": "npx tsc -b && npx vite build",
+  "buildCommand": "export VITE_SUPABASE_URL=/sb; npx tsc -b && npx vite build",
   "outputDirectory": "dist"
 }
